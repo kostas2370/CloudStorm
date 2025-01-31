@@ -1,0 +1,12 @@
+Django~=4.2.18
+djangorestframework~=3.15.2
+PyJWT~=2.10.1
+fernet~=1.0.1
+django-taggit
+python-dotenv~=1.0.0
+django-storages ~= 1.14.3
+django-storage-url ~= 0.12.0
+azure-core ~= 1.30.2
+azure-storage-blob ~= 12.22.0
+djangorestframework-simplejwt
+psycopg2-binary

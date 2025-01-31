@@ -1,15 +1,17 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from taggit.managers import TaggableManager
+from CloudStorm.utils import encrypt, decrypt
 
 
 class Group(models.Model):
     name = models.CharField(max_length = 40)
     is_private = models.BooleanField(default = False)
-    passcode = models.CharField(max_length = 200)
+    passcode = models.CharField(max_length = 2000, blank = True, null = True)
     tags = TaggableManager()
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
+    max_size = models.PositiveIntegerField(default = 2000000)
 
     def __setattr__(self, attrname, val):
         setter_func = 'setter_' + attrname
@@ -22,11 +24,11 @@ class Group(models.Model):
         return self.name
 
     def setter_passcode(self, val):
-        return val.upper()
+        return encrypt(val)
 
     def check_passcode(self, passcode):
         if self.passcode:
-            return self.passcode == passcode
+            return decrypt(self.passcode) == passcode
 
         return True
 
