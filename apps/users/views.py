@@ -27,8 +27,6 @@ class UserRegisterView(generics.GenericAPIView):
     authentication_classes = []
 
     def post(self, request):
-        if get_user_model().objects.all().count() > settings.USER_LIMIT:
-            return Response({"message": "User limit reached, contact the admin !"})
 
         serializer = self.get_serializer(data = request.data)
         serializer.is_valid(raise_exception = True)
@@ -42,7 +40,7 @@ class UserRegisterView(generics.GenericAPIView):
 
         current_site = get_current_site(request).domain
 
-        absurl = f'{current_site}{reverse("email-verify")}?token={str(token)}'
+        absurl = f'{current_site}{reverse("users:email-verify")}?token={str(token)}'
 
         send_mail(subject ="Register verification for video creator !", recipient_list = [user.email],
                   message=f"Thank you, here is the verification link : {absurl}", from_email= settings.EMAIL_HOST_USER)
