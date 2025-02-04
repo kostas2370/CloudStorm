@@ -12,13 +12,7 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     max_size = models.PositiveIntegerField(default = 2000000)
-
-    def __setattr__(self, attrname, val):
-        setter_func = 'setter_' + attrname
-        if attrname in self.__dict__ and callable(getattr(self, setter_func, None)):
-            super(Group, self).__setattr__(attrname, getattr(self, setter_func)(val))
-        else:
-            super(Group, self).__setattr__(attrname, val)
+    created_by = models.ForeignKey(get_user_model(), null = True, on_delete = models.SET_NULL)
 
     def __str__(self):
         return self.name
@@ -28,9 +22,19 @@ class Group(models.Model):
 
     def check_passcode(self, passcode):
         if self.passcode:
-            return decrypt(self.passcode) == passcode
+            code = decrypt(self.passcode)
+            return code == passcode
 
         return True
+
+    def save(self, *args, **kwargs):
+        if self.passcode:
+            self.passcode = encrypt(self.passcode)
+        super().save(*args, **kwargs)
+
+    def is_user_member(self, user):
+        return GroupUser.objects.filter(user = user, group = self).exists()
+
 
 
 class GroupUser(models.Model):
