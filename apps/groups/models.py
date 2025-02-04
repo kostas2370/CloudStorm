@@ -17,9 +17,6 @@ class Group(models.Model):
     def __str__(self):
         return self.name
 
-    def setter_passcode(self, val):
-        return encrypt(val)
-
     def check_passcode(self, passcode):
         if self.passcode:
             code = decrypt(self.passcode)
@@ -34,7 +31,6 @@ class Group(models.Model):
 
     def is_user_member(self, user):
         return GroupUser.objects.filter(user = user, group = self).exists()
-
 
 
 class GroupUser(models.Model):

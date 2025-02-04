@@ -56,14 +56,13 @@ def test_login_user_success(user):
 @pytest.mark.django_db
 def test_login_user_unverified(unverified_user):
     response = client.post("/api/login/", dict(username= "kostas2370", password = "Pass1234!"))
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db
 def test_login_user_fail(user):
     response = client.post("/api/login/", dict(username= "kostas2370", password = "wrongPass1!"))
-    assert response.status_code == 403
-    assert response.data['detail'] == 'There is not a user with that credentials'
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db

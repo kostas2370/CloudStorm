@@ -24,7 +24,6 @@ class GroupSerializer(TaggitSerializer, serializers.ModelSerializer):
         request_user = self.context['request'].user
         group = Group.objects.create(**validated_data)
         GroupUser.objects.create(group = group, user = request_user, role = "admin", can_add = True, can_delete = True)
-
         return group
 
 

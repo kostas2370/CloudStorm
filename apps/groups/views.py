@@ -13,7 +13,7 @@ class GroupsViewSet(ModelViewSet):
         if self.action in ['destroy', 'put', 'patch']:
             return [IsGroupAdmin(), ]
 
-        if self.action in ['create']:
+        if self.action in ['create', "list"]:
             return [IsAuthenticated(), ]
 
         if self.action == 'retrieve':

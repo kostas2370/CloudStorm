@@ -9,7 +9,7 @@ def encrypt(cleartext: str) -> str:
 
 
 def decrypt(ciphertext: str) -> str:
-    f = fernet.Fernet(settings.ENCRYPTION_KEY.encode())
-    print(ciphertext)
+    key = str.encode(settings.ENCRYPTION_KEY)
+    f = fernet.Fernet(key)
     return f.decrypt(ciphertext.encode()).decode()
 
