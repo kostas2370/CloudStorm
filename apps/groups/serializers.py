@@ -22,13 +22,14 @@ class GroupSerializer(TaggitSerializer, serializers.ModelSerializer):
 
     def create(self, validated_data):
         request_user = self.context['request'].user
-        group = Group.objects.create(**validated_data)
+        group = super().create(validated_data)
         GroupUser.objects.create(group = group, user = request_user, role = "admin", can_add = True, can_delete = True)
         return group
 
 
 class GroupListsSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    tags = TagListSerializerField()
 
     class Meta:
         model = Group

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'taggit',
     'storages',
     'drf_yasg',
+    'django_filters',
     'apps.groups',
     'apps.users',
     'apps.files'
@@ -138,8 +139,8 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.FileUploadParser',
     ], ''
-       'DEFAULT_AUTHENTICATION_CLASSES': ('apps.users.authenticate.CustomAuthentication',),
-
+    'DEFAULT_AUTHENTICATION_CLASSES': ('apps.users.authenticate.CustomAuthentication',),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 AUTH_USER_MODEL = 'users.User'
