@@ -5,6 +5,10 @@ from .serializers import GroupSerializer, GroupListsSerializer
 from .permissions import *
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 
 class GroupsViewSet(ModelViewSet):
@@ -15,7 +19,7 @@ class GroupsViewSet(ModelViewSet):
     search_fields = ['name']
 
     def get_permissions(self):
-        if self.action in ['destroy', 'put', 'patch']:
+        if self.action in ['destroy', 'put', 'patch', "add_member", "remove_member"]:
             return [IsGroupAdmin(), ]
 
         if self.action in ['create', "list"]:
@@ -47,3 +51,36 @@ class GroupsViewSet(ModelViewSet):
 
         return queryset
 
+    @action(methods = ["POST"], detail = True)
+    def add_member(self, request, pk):
+        group = self.get_object()
+        data = request.data.copy()
+        user_id = data.pop('user_id', None)
+        if not user_id:
+            return Response({"error": "User ID is required"}, status=400)
+
+        user = get_object_or_404(get_user_model(), id=user_id)
+        group_user = group.groupuser_set.filter(user=user).first()
+        if group_user:
+            return Response({"error": "User is already a member"}, status=400)
+
+        GroupUser.objects.create(user = user, group = group, **data)
+        return Response({"message": "User added successfully!"})
+
+    @action(methods = ["DELETE"], detail = True)
+    def remove_member(self, request, pk):
+        group = self.get_object()
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response({"error": "User ID is required"}, status=400)
+
+        group_user = group.groupuser_set.filter(user__id=user_id).first()
+        if not group_user:
+            return Response({"error": "There is not a user with that id in the group"}, status=400)
+
+        if group_user.role == "admin" and user_id != str(request.user.id):
+            return Response({"error": "You do not have permission to remove other group admin"}, status=400)
+
+        group_user.delete()
+
+        return Response({"message": "User removed successfully"}, status = 204)
