@@ -130,7 +130,7 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def logout_view(request):
     try:
         refresh_token = request.COOKIES.get("refresh_token")

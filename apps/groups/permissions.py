@@ -1,6 +1,7 @@
 from rest_framework.permissions import BasePermission
-from .models import GroupUser
-
+from .models import GroupUser, Group
+from apps.files.models import File
+from django.shortcuts import get_object_or_404
 
 class IsGroupAdmin(BasePermission):
 
@@ -23,7 +24,11 @@ class IsGroupUser(BasePermission):
 
 class CanAccessPrivateGroup(BasePermission):
 
+
     def has_object_permission(self, request, view, obj):
+        if isinstance(obj, File):
+            obj = obj.group
+
         if not obj.is_private:
             return True
 
