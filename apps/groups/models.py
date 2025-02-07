@@ -18,6 +18,9 @@ class Group(models.Model):
         return self.name
 
     def check_passcode(self, passcode):
+        if not self.is_private:
+            return True
+
         if self.passcode:
             code = decrypt(self.passcode)
             return code == passcode

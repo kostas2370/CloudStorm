@@ -45,3 +45,19 @@ class CanView(BasePermission):
             return False
 
         return gu.can_view
+
+
+class CanMassDelete(BasePermission):
+
+    def has_permission(self, request, view):
+        group = request.query_params.get('group')
+        passcode = request.query_params.get('passcode')
+
+        if not group:
+            return False
+
+        gu = GroupUser.objects.filter(user = request.user, group__id = group).first()
+        if not gu or not gu.can_delete:
+            return False
+
+        return gu.group.check_passcode(passcode)

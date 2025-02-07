@@ -1,13 +1,15 @@
 from rest_framework import serializers
 from .models import File
 from apps.groups.models import Group
+from taggit.serializers import (TagListSerializerField,
+                                TaggitSerializer)
 
 
-class FileSerializer(serializers.ModelSerializer):
+class FileSerializer(TaggitSerializer, serializers.ModelSerializer):
     group_name = serializers.CharField(source = 'group.name', read_only = True)
     created_by = serializers.HiddenField(default = serializers.CurrentUserDefault())
     created_by_username = serializers.CharField(source = 'created_by.username', read_only = True)
-
+    tags = TagListSerializerField()
     class Meta:
         model = File
         fields = "__all__"
@@ -19,22 +21,31 @@ class MultiFileUploadSerializer(serializers.Serializer):
         write_only=True
     )
     group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())
+    tags = serializers.CharField(max_length = 2000, required = False)
 
     def create(self, validated_data):
         files = validated_data.pop('files')
         group = validated_data.get('group')
+        tags = validated_data.get('tags', '').split(',')
         uploaded_by = self.context['request'].user
-
         file_instances = []
+
         for file in files:
             file_instance = File.objects.create(
                 file=file,
                 group=group,
                 uploaded_by=uploaded_by,
             )
+
+            for tag in tags:
+                file_instance.tags.add(tag)
+
             file_instances.append(file_instance)
 
         return file_instances
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class FileListSerializer(serializers.ModelSerializer):
