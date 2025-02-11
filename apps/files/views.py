@@ -1,15 +1,18 @@
+from rest_framework import filters
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from .permissions import CanAdd, CanList, CanView, CanDelete, CanMassDelete
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
-from .serializers import MultiFileUploadSerializer, FileSerializer, FileListSerializer
-from apps.groups.models import GroupUser
+from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .models import File
+from .serializers import MultiFileUploadSerializer, FileSerializer, FileListSerializer
+from .permissions import CanAdd, CanList, CanView, CanDelete, CanMassDelete
+
+from apps.groups.models import GroupUser
 from CloudStorm.paginator import StandardResultsSetPagination
 from apps.groups.permissions import CanAccessPrivateGroup
-from .models import File
-from rest_framework.decorators import action
 
 
 class GroupsViewSet(ModelViewSet):

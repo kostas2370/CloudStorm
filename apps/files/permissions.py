@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
-from apps.groups.models import GroupUser, Group
 from django.shortcuts import get_object_or_404
+from apps.groups.models import GroupUser, Group
 
 
 class CanDelete(BasePermission):
