@@ -2,22 +2,24 @@ import jwt
 from rest_framework_simplejwt import views as jwt_views
 from rest_framework import generics
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, VerifySerializer, \
-    CookieTokenRefreshSerializer
 from django.middleware import csrf
-import logging
-from rest_framework_simplejwt import tokens
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.core.mail import send_mail
+
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt import tokens
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ParseError
 
+import logging
+
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer, VerifySerializer, \
+    CookieTokenRefreshSerializer
 logger = logging.getLogger(__name__)
 
 

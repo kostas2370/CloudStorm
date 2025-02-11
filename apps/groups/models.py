@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+
 from taggit.managers import TaggableManager
 from CloudStorm.utils import encrypt, decrypt
 
@@ -37,14 +38,14 @@ class Group(models.Model):
 
 
 class GroupUser(models.Model):
-    ROLE_CHOICES = [
+    _ROLE_CHOICES = [
         ('admin', 'Admin'),
         ('member', 'Member'),
     ]
 
     user = models.ForeignKey(get_user_model(), on_delete = models.CASCADE)
     group = models.ForeignKey('Group', on_delete = models.CASCADE)
-    role = models.CharField(max_length = 20, choices = ROLE_CHOICES, default = "member")
+    role = models.CharField(max_length = 20, choices = _ROLE_CHOICES, default = "member")
     can_view = models.BooleanField(default = True)
     can_add = models.BooleanField(default= False)
     can_delete = models.BooleanField(default= False)

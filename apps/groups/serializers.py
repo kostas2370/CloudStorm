@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import *
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
+from .models import *
 
 
 class GroupSerializer(TaggitSerializer, serializers.ModelSerializer):

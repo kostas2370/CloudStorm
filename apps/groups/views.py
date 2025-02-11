@@ -1,14 +1,16 @@
-from rest_framework.viewsets import ModelViewSet
-from .models import Group
-from rest_framework.permissions import IsAuthenticated
-from .serializers import GroupSerializer, GroupListsSerializer
-from .permissions import *
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .models import Group, GroupUser
+from .serializers import GroupSerializer, GroupListsSerializer
+from .permissions import IsGroupUser, IsGroupAdmin, CanAccessPrivateGroup, IsVerifiedUser
 
 
 class GroupsViewSet(ModelViewSet):
@@ -20,15 +22,15 @@ class GroupsViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['destroy', 'put', 'patch', "add_member", "remove_member"]:
-            return [IsGroupAdmin(), ]
+            return [IsAuthenticated(), IsVerifiedUser(), IsGroupAdmin(), CanAccessPrivateGroup()]
 
         if self.action in ['create', "list"]:
             return [IsAuthenticated(), ]
 
         if self.action == 'retrieve':
-            return [CanAccessPrivateGroup()]
+            return [IsAuthenticated(), CanAccessPrivateGroup()]
 
-        return [IsGroupUser(), ]
+        return [IsAuthenticated(), IsGroupUser(), ]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -52,7 +54,7 @@ class GroupsViewSet(ModelViewSet):
         return queryset
 
     @action(methods = ["POST"], detail = True)
-    def add_member(self, request, pk):
+    def add_member(self, request, _):
         group = self.get_object()
         data = request.data.copy()
         user_id = data.pop('user_id', None)
@@ -68,7 +70,7 @@ class GroupsViewSet(ModelViewSet):
         return Response({"message": "User added successfully!"})
 
     @action(methods = ["DELETE"], detail = True)
-    def remove_member(self, request, pk):
+    def remove_member(self, request, _):
         group = self.get_object()
         user_id = request.query_params.get("user_id")
         if not user_id:
