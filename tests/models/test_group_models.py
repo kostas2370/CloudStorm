@@ -21,7 +21,7 @@ def test_group_passcode():
 
 @pytest.mark.django_db
 def test_group_check_passcode():
-    group = Group.objects.create(name = "Private Group", passcode = "secure123")
+    group = Group.objects.create(name = "Private Group", passcode = "secure123", is_private = True)
     assert group.check_passcode("secure123") is True
     assert group.check_passcode("wrongpass") is False
 

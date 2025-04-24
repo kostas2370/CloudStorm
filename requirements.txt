@@ -14,3 +14,7 @@ drf-yasg
 
 pytest~=8.3.4
 django-filter
+openai
+SpeechRecognition
+pydub
+moviepy

@@ -4,12 +4,23 @@ from apps.groups.models import Group
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 
+from django.conf import settings
+
+
+class AzureBlobFileField(serializers.FileField):
+    def to_representation(self, value):
+        if value is None:
+            return None
+        blob_url = f"{settings.BASE_URL}/api/files/{value.name.split('/')[1]}/{value.name.split('/')[-1]}"
+        return blob_url
+
 
 class FileSerializer(TaggitSerializer, serializers.ModelSerializer):
     group_name = serializers.CharField(source = 'group.name', read_only = True)
     created_by = serializers.HiddenField(default = serializers.CurrentUserDefault())
     created_by_username = serializers.CharField(source = 'created_by.username', read_only = True)
     tags = TagListSerializerField()
+    file = AzureBlobFileField()
     class Meta:
         model = File
         fields = "__all__"
@@ -50,7 +61,8 @@ class MultiFileUploadSerializer(serializers.Serializer):
 
 class FileListSerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source = 'group.name', read_only = True)
+    file = AzureBlobFileField()
 
     class Meta:
         model = File
-        exclude = ('file',)
+        fields = "__all__"

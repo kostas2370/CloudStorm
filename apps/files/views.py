@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django.conf import settings
 
 from .models import File
 from .serializers import MultiFileUploadSerializer, FileSerializer, FileListSerializer
@@ -13,6 +14,9 @@ from .permissions import CanAdd, CanList, CanView, CanDelete, CanMassDelete
 from apps.groups.models import GroupUser
 from CloudStorm.paginator import StandardResultsSetPagination
 from apps.groups.permissions import CanAccessPrivateGroup
+from rest_framework.views import APIView
+from azure.storage.blob import BlobServiceClient
+from django.http import StreamingHttpResponse
 
 
 class GroupsViewSet(ModelViewSet):
@@ -71,3 +75,22 @@ class GroupsViewSet(ModelViewSet):
             return Response({"message": f"Error : {exc}"}, status = 400)
 
         return Response({"message": f"Files got deleted !"}, status = 204)
+
+
+class SecureAzureBlobView(APIView):
+    permission_classes = [IsAuthenticated, CanView]
+
+    def get(self, request, group_name, filename):
+        try:
+            file_path = f'uploads/{group_name}/{filename}'
+            blob_service_client = BlobServiceClient.from_connection_string(settings.AZURE_CONNECTION_STRING)
+            blob_client = blob_service_client.get_blob_client(container = settings.AZURE_CONTAINER, blob = file_path)
+            stream = blob_client.download_blob()
+            response = StreamingHttpResponse(stream.chunks(),
+                                             content_type = stream.properties.content_settings.content_type)
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        except Exception as e:
+            print(e)
+            return Response({"message": "File not found !"}, status = 404)

@@ -9,6 +9,7 @@ router = routers.DefaultRouter()
 
 router.register('files', GroupsViewSet, "files")
 
-urlpatterns = []
+urlpatterns = [path('files/<str:group_name>/<str:filename>/', SecureAzureBlobView.as_view(), name='secure-azure-file'),]
+
 
 urlpatterns += router.urls

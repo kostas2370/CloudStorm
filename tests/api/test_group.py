@@ -30,8 +30,8 @@ def test_private_group_access(authenticated_client, private_group):
 
 
 @pytest.mark.django_db
-def test_delete_group(authenticated_client, private_group):
-    response = authenticated_client.delete(f"/api/groups/{private_group.id}/")
+def test_delete_group(authenticated_client, public_group):
+    response = authenticated_client.delete(f"/api/groups/{public_group.id}/")
     assert response.status_code == 204
 
 

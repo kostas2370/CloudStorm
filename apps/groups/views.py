@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Group, GroupUser
 from .serializers import GroupSerializer, GroupListsSerializer
 from .permissions import IsGroupUser, IsGroupAdmin, CanAccessPrivateGroup, IsVerifiedUser
+from apps.files.utils.file_utils import generate_filename
 
 
 class GroupsViewSet(ModelViewSet):
@@ -86,3 +87,16 @@ class GroupsViewSet(ModelViewSet):
         group_user.delete()
 
         return Response({"message": "User removed successfully"}, status = 204)
+
+    @action(methods = ["PATCH"], detail = True)
+    def ai_rename(self, request, pk):
+        target_format = request.data.get("target_format", "{random_number}_{title}")
+        group = self.get_object()
+        files = group.files.all()
+        for file in files:
+            name = generate_filename(file, target_format)
+            if name:
+                file.name = name
+                file.save()
+
+        return Response({"message": "Ai rename success"})
