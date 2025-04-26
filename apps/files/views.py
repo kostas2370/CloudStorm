@@ -10,6 +10,7 @@ from django.conf import settings
 from .models import File
 from .serializers import MultiFileUploadSerializer, FileSerializer, FileListSerializer
 from .permissions import CanAdd, CanList, CanView, CanDelete, CanMassDelete
+from .utils.file_utils import generate_filename, generate_short_description, generate_tags, extract_data
 
 from apps.groups.models import GroupUser
 from CloudStorm.paginator import StandardResultsSetPagination
@@ -19,13 +20,19 @@ from azure.storage.blob import BlobServiceClient
 from django.http import StreamingHttpResponse
 
 
-class GroupsViewSet(ModelViewSet):
+import zipfile
+import os
+import tempfile
+from django.core.files.base import ContentFile
+
+
+class FilesViewSet(ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['name', 'file_type', 'group']
     search_fields = ['name']
-    http_method_names = ['get', 'post', 'delete']
+    http_method_names = ['get', 'post', 'delete', 'patch']
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
@@ -40,9 +47,9 @@ class GroupsViewSet(ModelViewSet):
         return serializer_mapping.get(self.action, FileSerializer)
 
     def get_permissions(self):
-        permission_mapping = {"create": [IsAuthenticated(), CanAdd(), CanAccessPrivateGroup()],
-                              "destroy": [IsAuthenticated(), CanDelete(), CanAccessPrivateGroup()],
-                              "list": [IsAuthenticated(), CanList(), CanAccessPrivateGroup()],
+        permission_mapping = {"create": [IsAuthenticated(), CanAccessPrivateGroup(), CanAdd()],
+                              "destroy": [IsAuthenticated(), CanAccessPrivateGroup(), CanDelete()],
+                              "list": [IsAuthenticated(), CanAccessPrivateGroup(), CanList()],
                               "retrieve": [IsAuthenticated(), CanView(), CanAccessPrivateGroup()],
                               "mass_file_delete": [IsAuthenticated(), CanMassDelete()]}
 
@@ -66,6 +73,11 @@ class GroupsViewSet(ModelViewSet):
                             status=201)
         return Response(serializer.errors, status=400)
 
+    def retrieve(self, request, pk, *args, **kwargs):
+        obj = self.queryset.get(pk=pk)
+
+        return Response(FileSerializer(obj).data)
+
     @action(methods = ["DELETE"], detail = False)
     def mass_file_delete(self, request):
         to_delete = request.data.get("to_delete", [])
@@ -75,6 +87,77 @@ class GroupsViewSet(ModelViewSet):
             return Response({"message": f"Error : {exc}"}, status = 400)
 
         return Response({"message": f"Files got deleted !"}, status = 204)
+
+    @action(methods = ["POST"], detail = False)
+    def zip_upload(self, request):
+        zip_file = request.FILES.get('file')
+
+        if not zip_file:
+            return Response({"error": "No file provided."}, status = 400)
+
+        if not zip_file.name.endswith('.zip'):
+            return Response({"error": "Uploaded file is not a ZIP archive."}, status = 400)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+
+                files = []
+                for root, dirs, file_names in os.walk(temp_dir):
+                    for filename in file_names:
+                        file_path = os.path.join(root, filename)
+
+                        with open(file_path, 'rb') as f:
+                            content = f.read()
+
+                        content_file = ContentFile(content, name = filename)
+                        files.append(content_file)
+
+                serializer_data = {'files': files,
+                                   'group': request.data.get('group'),
+                                   'tags': request.data.get('tags', ''),
+                                   'ai_enabled': request.data.get('ai_enabled', False)}
+
+                serializer = MultiFileUploadSerializer(data = serializer_data, context = {'request': request})
+                serializer.is_valid(raise_exception = True)
+                file_instances = serializer.save()
+
+                return Response({"message": "ZIP extracted and files uploaded successfully.",
+                                 "file_ids": [file.id for file in file_instances]})
+
+            except zipfile.BadZipFile:
+                return Response({"error": "Invalid ZIP file."}, status = 400)
+
+    @action(methods = ["PATCH"], detail = True)
+    def ai_generate(self, request, pk=None):
+        obj = self.get_object()
+        generate_type = request.data.get('type')
+        user_prompt = request.data.get('user_prompt')
+        target_format = request.data.get('target_format')
+
+        if not generate_type:
+            return Response({"error": "Missing 'type' in request data."}, status = 400)
+
+        extracted_data = None
+        if generate_type == "filename":
+            extracted_data = generate_filename(obj, target_format)
+            obj.name = extracted_data
+            obj.save()
+        elif generate_type == "short_description":
+            extracted_data = generate_short_description(obj)
+            obj.short_description = extracted_data
+            obj.save()
+        elif generate_type == "tags":
+            extracted_data = generate_tags(obj)
+            if extracted_data:
+                for generated_tag in extracted_data:
+                    obj.tags.add(generated_tag)
+                obj.save()
+        else:
+            extracted_data = extract_data(obj, user_prompt)
+
+        return Response({"extracted_data": extracted_data}, status = 200)
 
 
 class SecureAzureBlobView(APIView):

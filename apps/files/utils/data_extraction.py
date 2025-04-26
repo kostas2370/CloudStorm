@@ -19,11 +19,17 @@ def document_data_extraction(file, prompt):
         tools=[{"type": "file_search"}],
         )
     thread = client.beta.threads.create()
-    with file.file.open("rb") as f:
-        file = client.files.create(file = (file.file.name, f), purpose = "user_data")
+    extracted_data = file.extracted_data.filter(name = "open_ai_file_id").first()
+
+    if not extracted_data:
+        with file.file.open("rb") as f:
+            openai_file = client.files.create(file = (file.file.name, f), purpose = "user_data")
+            extracted_data = file.create_extracted_data(name = "open_ai_file_id", data = openai_file.id,
+                                                        hidden_from_user = True)
 
     client.beta.threads.messages.create(thread_id = thread.id, role = "user",
-                                        attachments = [Attachment(file_id = file.id, tools = [AttachmentToolFileSearch(type = "file_search")])],
+                                        attachments = [Attachment(file_id = extracted_data.data,
+                                                                  tools = [AttachmentToolFileSearch(type = "file_search")])],
                                         content = prompt, )
 
     run = client.beta.threads.runs.create_and_poll(thread_id = thread.id, assistant_id = cloudstorm_assistant.id,
@@ -35,7 +41,6 @@ def document_data_extraction(file, prompt):
     messages = [message for message in messages_cursor]
 
     res_txt = messages[0].content[0].text.value
-    client.files.delete(file.id)
 
     return res_txt
 
@@ -84,12 +89,22 @@ def string_data_extraction(string, prompt):
 
 
 def audio_data_extraction(file, prompt):
-    text = speech_to_text(file.file)
+    extracted_data = file.extracted_data.filter(name = "extracted_text").first()
+    if not extracted_data:
+        text = speech_to_text(file.file)
+        file.create_extracted_data(name = "extracted_text", data = text)
+    else:
+        text = extracted_data.data
     data = string_data_extraction(text, prompt)
     return data
 
 
 def video_data_extraction(file, prompt):
-    text = video_to_text(file.file)
+    extracted_data = file.extracted_data.filter(name = "extracted_text").first()
+    if not extracted_data:
+        text = video_to_text(file.file)
+        file.create_extracted_data(name = "extracted_text", data = text)
+    else:
+        text = extracted_data.data
     data = string_data_extraction(text, prompt)
     return data

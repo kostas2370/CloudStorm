@@ -4,7 +4,6 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,6 +35,7 @@ INSTALLED_APPS = [
     'storages',
     'drf_yasg',
     'django_filters',
+    'encrypted_model_fields',
     'apps.groups',
     'apps.users',
     'apps.files'
@@ -189,3 +189,5 @@ SWAGGER_SETTINGS = {
 
 OPEN_API_KEY = os.getenv("OPEN_API_KEY")
 BASE_URL = "http://127.0.0.1:8000"
+
+FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '').encode()

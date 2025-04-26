@@ -31,10 +31,6 @@ class CanAccessPrivateGroup(BasePermission):
         if not obj.is_user_member(request.user):
             return False
 
-        passcode = request.query_params.get("passcode")
-        if not passcode or not obj.check_passcode(passcode):
-            return False
-
         return True
 
 

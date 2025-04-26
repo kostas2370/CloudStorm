@@ -1,15 +1,17 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import PermissionsMixin
-
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedEmailField, EncryptedBooleanField
 from rest_framework_simplejwt.tokens import RefreshToken
+import uuid
+from django.db import models
 
 
 class User(AbstractUser, PermissionsMixin):
-    first_name = models.CharField(max_length = 20, blank = False)
-    last_name = models.CharField(max_length = 20, blank = False)
-    email = models.EmailField(unique = True)
-    is_verified = models.BooleanField(default = False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    first_name = EncryptedCharField(max_length = 20, blank = False)
+    last_name = EncryptedCharField(max_length = 20, blank = False)
+    email = EncryptedEmailField(unique = True)
+    is_verified = EncryptedBooleanField(default = False)
 
     REQUIRED_FIELDS = ["email"]
 

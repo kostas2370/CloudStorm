@@ -18,3 +18,4 @@ openai
 SpeechRecognition
 pydub
 moviepy
+django-encrypted-model-fields

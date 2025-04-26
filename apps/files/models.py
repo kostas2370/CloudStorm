@@ -4,15 +4,16 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from taggit.managers import TaggableManager
 import os
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedEmailField, EncryptedTextField, EncryptedBooleanField, EncryptedPositiveIntegerField, EncryptedDateTimeField
 
 from .utils.data_extraction import *
 from .utils.file_utils import content_file_name, get_file_type
-
-
-# TODO Save the extracted data , so we won't have to process them again.
+import uuid
+from apps.groups.models import UUIDTaggedItem
 
 
 class File(models.Model):
+
     FILE_TYPES = [
         ('image', 'Image'),
         ('video', 'Video'),
@@ -21,16 +22,17 @@ class File(models.Model):
         ('other', 'Other'),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, blank=True, null=True)
     group = models.ForeignKey("groups.Group", on_delete=models.CASCADE, related_name = "files")
     uploaded_by = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    tags = TaggableManager()
+    tags = TaggableManager(through=UUIDTaggedItem)
     file = models.FileField(upload_to=content_file_name)
     file_type = models.CharField(max_length=10, choices=FILE_TYPES, blank = True, null = True)
     file_size = models.PositiveIntegerField(default=1)
     file_extension = models.CharField(max_length=10, blank=True, null=True)
-    short_description = models.CharField(max_length = 500, blank = True, null = True)
+    short_description = models.CharField(max_length = 2000, blank = True, null = True)
 
     def __str__(self):
         return self.name if self.name else f"File {self.id}"
@@ -80,3 +82,18 @@ class File(models.Model):
             return extraction_function(self, prompt)
 
         return None
+
+    def create_extracted_data(self,name,data, hidden_from_user = False):
+        return ExtractedData.objects.create(file = self, name = name, data = data, hidden_from_user = hidden_from_user)
+
+
+class ExtractedData(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    file = models.ForeignKey(File, on_delete = models.CASCADE, related_name = "extracted_data")
+    name = models.CharField(max_length = 100)
+    extraction_date = models.DateTimeField(auto_now_add=True)
+    hidden_from_user = models.BooleanField(default = False)
+    data = EncryptedTextField()
+
+    def __str__(self):
+        return f"{self.file.name}:{self.name}"

@@ -15,10 +15,9 @@ class CanDelete(BasePermission):
 class CanAdd(BasePermission):
     def has_permission(self, request, view):
 
-        gu = GroupUser.objects.filter(user = request.user, group = request.data.get('group')).first()
+        gu = GroupUser.objects.filter(user = request.user, group = request.query_params.get('group')).first()
         if not gu:
             return False
-
         return gu.can_add
 
 
@@ -33,9 +32,8 @@ class CanList(BasePermission):
             return False
 
         obj = get_object_or_404(Group, pk = group)
-        passcode = request.query_params.get("passcode")
 
-        return not obj.is_private or (obj.is_user_member(request.user) and obj.check_passcode(passcode or ""))
+        return not obj.is_private or (obj.is_user_member(request.user))
 
 
 class CanView(BasePermission):
@@ -51,7 +49,6 @@ class CanMassDelete(BasePermission):
 
     def has_permission(self, request, view):
         group = request.query_params.get('group')
-        passcode = request.query_params.get('passcode')
 
         if not group:
             return False
@@ -60,4 +57,4 @@ class CanMassDelete(BasePermission):
         if not gu or not gu.can_delete:
             return False
 
-        return gu.group.check_passcode(passcode)
+        return True

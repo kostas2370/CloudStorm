@@ -1,6 +1,5 @@
 from rest_framework import filters
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
@@ -11,7 +10,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Group, GroupUser
 from .serializers import GroupSerializer, GroupListsSerializer
 from .permissions import IsGroupUser, IsGroupAdmin, CanAccessPrivateGroup, IsVerifiedUser
-from apps.files.utils.file_utils import generate_filename
+
+import io
+import zipfile
+from django.conf import settings
+from django.http import StreamingHttpResponse
+from azure.storage.blob import BlobServiceClient
+from rest_framework.decorators import action
 
 
 class GroupsViewSet(ModelViewSet):
@@ -23,7 +28,7 @@ class GroupsViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['destroy', 'put', 'patch', "add_member", "remove_member"]:
-            return [IsAuthenticated(), IsVerifiedUser(), IsGroupAdmin(), CanAccessPrivateGroup()]
+            return [IsAuthenticated(), IsVerifiedUser(), IsGroupAdmin()]
 
         if self.action in ['create', "list"]:
             return [IsAuthenticated(), ]
@@ -88,15 +93,35 @@ class GroupsViewSet(ModelViewSet):
 
         return Response({"message": "User removed successfully"}, status = 204)
 
-    @action(methods = ["PATCH"], detail = True)
-    def ai_rename(self, request, pk):
-        target_format = request.data.get("target_format", "{random_number}_{title}")
+    @action(methods=["GET"], detail=True)
+    def download_zip(self, request, pk):
         group = self.get_object()
         files = group.files.all()
-        for file in files:
-            name = generate_filename(file, target_format)
-            if name:
-                file.name = name
-                file.save()
 
-        return Response({"message": "Ai rename success"})
+        if not files.exists():
+            return Response("No files found.", status=404)
+
+        blob_service_client = BlobServiceClient.from_connection_string(settings.AZURE_CONNECTION_STRING)
+        container = settings.AZURE_CONTAINER
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for file in files:
+                blob_path = file.file.name
+
+                try:
+                    blob_client = blob_service_client.get_blob_client(container=container, blob=blob_path)
+                    stream = blob_client.download_blob()
+                    file_data = stream.readall()
+                    filename = file.name or blob_path.split('/')[-1]
+                    zip_file.writestr(filename, file_data)
+
+                except Exception as e:
+                    print(f"Error downloading blob {blob_path}: {e}")
+                    continue
+
+        zip_buffer.seek(0)
+
+        response = StreamingHttpResponse(zip_buffer, content_type="application/zip")
+        response['Content-Disposition'] = f'attachment; filename=group_{group.id}_files.zip'
+        return response
