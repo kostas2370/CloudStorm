@@ -32,18 +32,10 @@ class UserRegisterView(generics.GenericAPIView):
 
         serializer = self.get_serializer(data = request.data)
         serializer.is_valid(raise_exception = True)
-        serializer.save()
-
-        user = get_user_model().objects.get(email=serializer.data["email"])
-        user.set_password(request.data["password"])
-        user.save()
-
+        user = serializer.save()
         token = tokens.RefreshToken.for_user(user).access_token
-
         current_site = get_current_site(request).domain
-
         absurl = f'{current_site}{reverse("users:email-verify")}?token={str(token)}'
-
         send_mail(subject ="Register verification for video creator !", recipient_list = [user.email],
                   message=f"Thank you, here is the verification link : {absurl}", from_email= settings.EMAIL_HOST_USER)
 

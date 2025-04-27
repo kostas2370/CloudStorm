@@ -15,6 +15,9 @@ class IsGroupUser(BasePermission):
     message = "You have to be member of the group to do this action"
 
     def has_object_permission(self, request, view, obj):
+        if isinstance(obj, File):
+            obj = obj.group
+
         return obj.is_user_member(request.user)
 
 

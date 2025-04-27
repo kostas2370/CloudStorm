@@ -103,3 +103,11 @@ class ExtractedDataSerializer(serializers.ModelSerializer):
         model = ExtractedData
         exclude = ('file', 'hidden_from_user')
 
+
+class FilePartialUpdateSerializer(TaggitSerializer, serializers.ModelSerializer):
+    tags = TagListSerializerField(required=False)
+
+    class Meta:
+        model = File
+        fields = ['id', 'name', 'tags', 'short_description']
+        read_only_fields = ['id']

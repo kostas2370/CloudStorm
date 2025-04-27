@@ -27,7 +27,7 @@ class GroupsViewSet(ModelViewSet):
     search_fields = ['name']
 
     def get_permissions(self):
-        if self.action in ['destroy', 'put', 'patch', "add_member", "remove_member"]:
+        if self.action in ['destroy', 'put', 'patch', "add_member", "remove_member", "edit_member"]:
             return [IsAuthenticated(), IsVerifiedUser(), IsGroupAdmin()]
 
         if self.action in ['create', "list"]:
@@ -93,6 +93,19 @@ class GroupsViewSet(ModelViewSet):
 
         return Response({"message": "User removed successfully"}, status = 204)
 
+    @action(methods = ["PUT"], detail = True)
+    def edit_members(self,request, pk):
+        group = self.get_object()
+        for member in request.data:
+            group_user = group.groupuser_set.filter(user__id = member["user_id"]).first()
+            if not group_user:
+                continue
+            group_user.role = member.get("role", group_user.role)
+            group_user.can_add = member.get("can_add", group_user.role)
+            group_user.can_delete = member.get("can_delete", group_user.role)
+            group_user.save()
+
+        return Response({"message": "Users permission got edited !"}, status = 200)
     @action(methods=["GET"], detail=True)
     def download_zip(self, request, pk):
         group = self.get_object()

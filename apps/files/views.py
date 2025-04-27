@@ -8,8 +8,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 
 from .models import File
-from .serializers import MultiFileUploadSerializer, FileSerializer, FileListSerializer
-from .permissions import CanAdd, CanList, CanView, CanDelete, CanMassDelete
+from .serializers import MultiFileUploadSerializer, FileSerializer, FileListSerializer, FilePartialUpdateSerializer
+from .permissions import CanAdd, CanList, CanEdit, CanDelete, CanMassDelete, CanView
 from .utils.file_utils import generate_filename, generate_short_description, generate_tags, extract_data
 
 from apps.groups.models import GroupUser
@@ -42,7 +42,8 @@ class FilesViewSet(ModelViewSet):
     def get_serializer_class(self):
 
         serializer_mapping = {"create": MultiFileUploadSerializer,
-                              "list": FileListSerializer}
+                              "list": FileListSerializer,
+                              "partial_update": FilePartialUpdateSerializer}
 
         return serializer_mapping.get(self.action, FileSerializer)
 
@@ -50,8 +51,9 @@ class FilesViewSet(ModelViewSet):
         permission_mapping = {"create": [IsAuthenticated(), CanAccessPrivateGroup(), CanAdd()],
                               "destroy": [IsAuthenticated(), CanAccessPrivateGroup(), CanDelete()],
                               "list": [IsAuthenticated(), CanAccessPrivateGroup(), CanList()],
-                              "retrieve": [IsAuthenticated(), CanView(), CanAccessPrivateGroup()],
-                              "mass_file_delete": [IsAuthenticated(), CanMassDelete()]}
+                              "retrieve": [IsAuthenticated(), CanAccessPrivateGroup()],
+                              "mass_file_delete": [IsAuthenticated(), CanMassDelete()],
+                              "partial_update": [IsAuthenticated(), CanEdit()]}
 
         return permission_mapping.get(self.action, [IsAuthenticated()])
 
@@ -72,11 +74,6 @@ class FilesViewSet(ModelViewSet):
             return Response({"message": "Files uploaded successfully", "files": [file.id for file in files]},
                             status=201)
         return Response(serializer.errors, status=400)
-
-    def retrieve(self, request, pk, *args, **kwargs):
-        obj = self.queryset.get(pk=pk)
-
-        return Response(FileSerializer(obj).data)
 
     @action(methods = ["DELETE"], detail = False)
     def mass_file_delete(self, request):

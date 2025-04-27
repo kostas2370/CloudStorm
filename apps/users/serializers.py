@@ -71,6 +71,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return super().validate(attrs)
 
+    def create(self, validated_data):
+        user = super().create(validated_data)
+        user.set_password(validated_data.get("password"))
+        user.save()
+        return user
+
 
 class CookieTokenRefreshSerializer(jwt_serializers.TokenRefreshSerializer):
     refresh = None
