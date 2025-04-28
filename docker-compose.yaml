@@ -24,3 +24,19 @@ services:
       - .env
     depends_on:
       - db
+
+  redis-stack-server:
+    image: redis/redis-stack-server:latest
+    container_name: redis-stack-server
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  celery:
+    build: .
+    command: /startceleryworker
+
+    volumes:
+      - .:/app
+    depends_on:
+      - redis-stack-server

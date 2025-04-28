@@ -22,5 +22,6 @@ COPY requirements.txt .
 RUN python -m pip install --upgrade pip
 RUN pip install -r requirements.txt --ignore-installed
 COPY startdjango.sh /startdjango
+COPY startceleryworker.sh /startceleryworker
 
 EXPOSE 8000

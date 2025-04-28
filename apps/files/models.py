@@ -22,8 +22,13 @@ class File(models.Model):
         ('other', 'Other'),
     ]
 
+    FILE_STATUS = [
+        ('ready', 'Ready'),
+        ('generate', 'Generate')
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=100, blank=True, null=True)
+    name = models.CharField(max_length=500, blank=True, null=True)
     group = models.ForeignKey("groups.Group", on_delete=models.CASCADE, related_name = "files")
     uploaded_by = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -33,6 +38,7 @@ class File(models.Model):
     file_size = models.PositiveIntegerField(default=1)
     file_extension = models.CharField(max_length=10, blank=True, null=True)
     short_description = models.CharField(max_length = 2000, blank = True, null = True)
+    status = models.CharField(max_length = 20, default = "ready", choices = FILE_STATUS)
 
     def __str__(self):
         return self.name if self.name else f"File {self.id}"

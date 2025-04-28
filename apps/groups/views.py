@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Group, GroupUser
@@ -17,6 +16,7 @@ from django.conf import settings
 from django.http import StreamingHttpResponse
 from azure.storage.blob import BlobServiceClient
 from rest_framework.decorators import action
+from django.core.mail import send_mail
 
 
 class GroupsViewSet(ModelViewSet):
@@ -60,19 +60,25 @@ class GroupsViewSet(ModelViewSet):
         return queryset
 
     @action(methods = ["POST"], detail = True)
-    def add_member(self, request, _):
+    def add_member(self, request, pk):
         group = self.get_object()
         data = request.data.copy()
-        user_id = data.pop('user_id', None)
-        if not user_id:
-            return Response({"error": "User ID is required"}, status=400)
+        email = data.pop('user_email', None)
+        if not email:
+            return Response({"error": "User email is required"}, status=400)
+        user = get_user_model().objects.filter(email=email[0]).first()
+        if not user:
+            return Response({"error": "There is not user with this email"}, status=400)
 
-        user = get_object_or_404(get_user_model(), id=user_id)
         group_user = group.groupuser_set.filter(user=user).first()
         if group_user:
             return Response({"error": "User is already a member"}, status=400)
 
         GroupUser.objects.create(user = user, group = group, **data)
+        send_mail(subject = "You got added to a group", recipient_list = [user.email],
+                  message = f"You got added to a group named : {group.name}",
+                  from_email = settings.EMAIL_HOST_USER)
+
         return Response({"message": "User added successfully!"})
 
     @action(methods = ["DELETE"], detail = True)

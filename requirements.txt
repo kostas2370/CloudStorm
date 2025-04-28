@@ -19,3 +19,7 @@ SpeechRecognition
 pydub
 moviepy
 django-encrypted-model-fields
+celery==5.2.7
+django_celery_beat
+celery[redis]
+channels-redis

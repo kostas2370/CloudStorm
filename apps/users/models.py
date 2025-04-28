@@ -10,7 +10,7 @@ class User(AbstractUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = EncryptedCharField(max_length = 20, blank = False)
     last_name = EncryptedCharField(max_length = 20, blank = False)
-    email = EncryptedEmailField(unique = True)
+    email = models.EmailField(unique = True)
     is_verified = EncryptedBooleanField(default = False)
 
     REQUIRED_FIELDS = ["email"]

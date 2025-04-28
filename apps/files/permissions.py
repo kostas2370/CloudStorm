@@ -18,7 +18,7 @@ class CanAdd(BasePermission):
         gu = GroupUser.objects.filter(user = request.user, group = request.query_params.get('group')).first()
         if not gu:
             return False
-        return gu.can_add
+        return gu.can_add or gu.role == "admin"
 
 
 class CanView(BasePermission):
@@ -42,7 +42,7 @@ class CanList(BasePermission):
             return True
 
         gu = GroupUser.objects.filter(user = request.user, group__id = group).first()
-        if not gu or not gu.can_view:
+        if not gu:
             return False
 
         obj = get_object_or_404(Group, pk = group)

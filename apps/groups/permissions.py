@@ -27,7 +27,6 @@ class CanAccessPrivateGroup(BasePermission):
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, File):
             obj = obj.group
-
         if not obj.is_private:
             return True
 

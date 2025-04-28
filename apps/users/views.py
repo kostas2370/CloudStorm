@@ -9,8 +9,7 @@ from django.contrib.auth import get_user_model
 from django.middleware import csrf
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
-from django.core.mail import send_mail
-
+from .tasks import send_email
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt import tokens
 from rest_framework.decorators import api_view, permission_classes
@@ -36,8 +35,8 @@ class UserRegisterView(generics.GenericAPIView):
         token = tokens.RefreshToken.for_user(user).access_token
         current_site = get_current_site(request).domain
         absurl = f'{current_site}{reverse("users:email-verify")}?token={str(token)}'
-        send_mail(subject ="Register verification for video creator !", recipient_list = [user.email],
-                  message=f"Thank you, here is the verification link : {absurl}", from_email= settings.EMAIL_HOST_USER)
+        send_email.delay(subject ="Register verification for video creator !", recipient_list = [user.email],
+                         message=f"Thank you, here is the verification link : {absurl}")
 
         return Response(UserSerializer(user).data, status = status.HTTP_201_CREATED)
 

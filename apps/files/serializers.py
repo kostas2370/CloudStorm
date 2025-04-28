@@ -3,34 +3,11 @@ from .models import File, ExtractedData
 from apps.groups.models import Group
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
-from .utils.file_utils import generate_filename, generate_short_description, generate_tags
 
 from django.conf import settings
-from concurrent.futures import ThreadPoolExecutor
 
-
-def process_file(file, group, uploaded_by, tags, ai_enabled):
-    file_instance = File.objects.create(
-        file=file,
-        group=group,
-        uploaded_by=uploaded_by,
-    )
-    if ai_enabled:
-        try:
-            file_instance.name = generate_filename(file_instance)
-            file_instance.short_description = generate_short_description(file_instance)
-            generated_tags = generate_tags(file_instance)
-            for generated_tag in generated_tags:
-                file_instance.tags.add(generated_tag)
-            file_instance.save()
-        except Exception as exc:
-            print(exc)
-
-    for tag in tags:
-        if tag:
-            file_instance.tags.add(tag)
-
-    return file_instance
+from celery import group
+from .tasks import process_file
 
 
 class AzureBlobFileField(serializers.FileField):
@@ -71,17 +48,15 @@ class MultiFileUploadSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         files = validated_data.pop('files')
-        group = validated_data.get('group')
+        user_group = validated_data.get('group')
         tags = validated_data.get('tags', '').split(',')
         ai_enabled = validated_data.get('ai_enabled')
         uploaded_by = self.context['request'].user
 
-        file_instances = []
-        with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(process_file, file, group, uploaded_by, tags, ai_enabled) for file in files]
-            for future in futures:
-                file_instances.append(future.result())
+        file_instances = [File.objects.create(file = file, group = user_group, uploaded_by = uploaded_by) for file in files]
 
+        task_group = group(process_file.s(file.id, tags, ai_enabled) for file in file_instances)
+        result = task_group.apply_async()
         return file_instances
 
     def update(self, instance, validated_data):

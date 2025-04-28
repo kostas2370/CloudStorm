@@ -20,6 +20,7 @@ from azure.storage.blob import BlobServiceClient
 from django.http import StreamingHttpResponse
 
 
+
 import zipfile
 import os
 import tempfile
@@ -31,13 +32,13 @@ class FilesViewSet(ModelViewSet):
     serializer_class = FileSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['name', 'file_type', 'group']
-    search_fields = ['name']
+    search_fields = ['name', 'short_description']
     http_method_names = ['get', 'post', 'delete', 'patch']
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         return self.queryset.filter(group__in =
-                                    GroupUser.objects.filter(user = self.request.user, can_view = True).values('group'))
+                                    GroupUser.objects.filter(user = self.request.user).values('group'))
 
     def get_serializer_class(self):
 
@@ -53,7 +54,8 @@ class FilesViewSet(ModelViewSet):
                               "list": [IsAuthenticated(), CanAccessPrivateGroup(), CanList()],
                               "retrieve": [IsAuthenticated(), CanAccessPrivateGroup()],
                               "mass_file_delete": [IsAuthenticated(), CanMassDelete()],
-                              "partial_update": [IsAuthenticated(), CanEdit()]}
+                              "partial_update": [IsAuthenticated(), CanEdit()],
+                              "zip_upload": [IsAuthenticated(), CanAdd()]}
 
         return permission_mapping.get(self.action, [IsAuthenticated()])
 
@@ -129,6 +131,8 @@ class FilesViewSet(ModelViewSet):
     @action(methods = ["PATCH"], detail = True)
     def ai_generate(self, request, pk=None):
         obj = self.get_object()
+        if obj.status == "generate":
+            return Response({"message": "The file is on generate status. Wait until its done!"}, status = 400)
         generate_type = request.data.get('type')
         user_prompt = request.data.get('user_prompt')
         target_format = request.data.get('target_format')

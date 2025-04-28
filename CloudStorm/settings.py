@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'encrypted_model_fields',
     'apps.groups',
     'apps.users',
-    'apps.files'
+    'apps.files',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
@@ -199,3 +200,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = os.getenv("EMAIL_PORT", 587)
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+
+
+CELERY_BROKER_URL = 'redis://redis-stack-server:6379/0'
+CELERY_BROKER_URL = 'redis://redis-stack-server:6379/0'

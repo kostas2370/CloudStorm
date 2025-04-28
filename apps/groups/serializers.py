@@ -7,9 +7,9 @@ from .models import *
 class GroupSerializer(TaggitSerializer, serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
-    passcode = serializers.CharField(write_only=True)
+    passcode = serializers.CharField(write_only=True, required = False)
     max_size = serializers.IntegerField(read_only = True)
-    tags = TagListSerializerField()
+    tags = TagListSerializerField(required = False)
     created_by = serializers.HiddenField(default = serializers.CurrentUserDefault())
 
     class Meta:
@@ -40,4 +40,5 @@ class GroupUserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source = 'user.username', read_only = True)
     class Meta:
         model = GroupUser
-        fields = '__all__'
+        exclude = ('group', 'id')
+
