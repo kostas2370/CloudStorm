@@ -137,3 +137,5 @@ GitHub.sublime-settings
 !.vscode/extensions.json
 .history
 /.ruff_cache/
+
+uv.lock
