@@ -7,7 +7,7 @@ class IsGroupAdmin(BasePermission):
     message = "You have to be admin to do this action"
 
     def has_object_permission(self, request, view, obj):
-        group_user = GroupUser.objects.filter(group = obj, user = request.user).first()
+        group_user = GroupUser.objects.filter(group=obj, user=request.user).first()
         return group_user and group_user.role == "admin"
 
 

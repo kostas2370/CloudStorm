@@ -1,5 +1,9 @@
 from .models import File
-from .utils.file_utils import generate_filename, generate_short_description, generate_tags
+from .utils.file_utils import (
+    generate_filename,
+    generate_short_description,
+    generate_tags,
+)
 from celery import shared_task
 from channels.layers import get_channel_layer
 
@@ -9,7 +13,7 @@ channel_layer = get_channel_layer()
 
 @shared_task
 def process_file(file_id, tags, ai_enabled):
-    file_instance = File.objects.get(id = file_id)
+    file_instance = File.objects.get(id=file_id)
     file_instance.status = "generate"
     file_instance.save()
     if ai_enabled:

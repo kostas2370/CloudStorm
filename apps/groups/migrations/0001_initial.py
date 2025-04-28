@@ -7,49 +7,110 @@ import uuid
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('contenttypes', '0002_remove_content_type_name'),
-        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
+        ("contenttypes", "0002_remove_content_type_name"),
+        (
+            "taggit",
+            "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
+        ),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Group',
+            name="Group",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=40)),
-                ('is_private', models.BooleanField(default=False)),
-                ('passcode', encrypted_model_fields.fields.EncryptedCharField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('max_size', models.PositiveIntegerField(default=2000000)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=40)),
+                ("is_private", models.BooleanField(default=False)),
+                (
+                    "passcode",
+                    encrypted_model_fields.fields.EncryptedCharField(
+                        blank=True, null=True
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("max_size", models.PositiveIntegerField(default=2000000)),
             ],
         ),
         migrations.CreateModel(
-            name='UUIDTaggedItem',
+            name="UUIDTaggedItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('object_id', models.UUIDField(db_index=True, verbose_name='object ID')),
-                ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s_tagged_items', to='contenttypes.contenttype', verbose_name='content type')),
-                ('tag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s_items', to='taggit.tag')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "object_id",
+                    models.UUIDField(db_index=True, verbose_name="object ID"),
+                ),
+                (
+                    "content_type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="%(app_label)s_%(class)s_tagged_items",
+                        to="contenttypes.contenttype",
+                        verbose_name="content type",
+                    ),
+                ),
+                (
+                    "tag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="%(app_label)s_%(class)s_items",
+                        to="taggit.tag",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Tag',
-                'verbose_name_plural': 'Tags',
+                "verbose_name": "Tag",
+                "verbose_name_plural": "Tags",
             },
         ),
         migrations.CreateModel(
-            name='GroupUser',
+            name="GroupUser",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('role', models.CharField(choices=[('admin', 'Admin'), ('member', 'Member')], default='member', max_length=20)),
-                ('can_view', models.BooleanField(default=True)),
-                ('can_add', models.BooleanField(default=False)),
-                ('can_delete', models.BooleanField(default=False)),
-                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='groups.group')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "role",
+                    models.CharField(
+                        choices=[("admin", "Admin"), ("member", "Member")],
+                        default="member",
+                        max_length=20,
+                    ),
+                ),
+                ("can_view", models.BooleanField(default=True)),
+                ("can_add", models.BooleanField(default=False)),
+                ("can_delete", models.BooleanField(default=False)),
+                (
+                    "group",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="groups.group"
+                    ),
+                ),
             ],
         ),
     ]

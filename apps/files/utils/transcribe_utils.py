@@ -22,7 +22,7 @@ def speech_to_text(file):
 
 
 def extract_audio_from_video(video_file, audio_path="temp_audio.wav"):
-    with tempfile.NamedTemporaryFile(delete = False, suffix = ".mp4") as temp_video:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
         for chunk in video_file.chunks():
             temp_video.write(chunk)
         temp_video_path = temp_video.name

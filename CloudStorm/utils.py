@@ -12,4 +12,3 @@ def decrypt(ciphertext: str) -> str:
     key = str.encode(settings.ENCRYPTION_KEY)
     f = fernet.Fernet(key)
     return f.decrypt(ciphertext.encode()).decode()
-

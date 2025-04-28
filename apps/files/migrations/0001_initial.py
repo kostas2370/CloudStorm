@@ -7,34 +7,73 @@ import uuid
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='ExtractedData',
+            name="ExtractedData",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=100)),
-                ('extraction_date', models.DateTimeField(auto_now_add=True)),
-                ('hidden_from_user', models.BooleanField(default=False)),
-                ('data', encrypted_model_fields.fields.EncryptedTextField()),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("extraction_date", models.DateTimeField(auto_now_add=True)),
+                ("hidden_from_user", models.BooleanField(default=False)),
+                ("data", encrypted_model_fields.fields.EncryptedTextField()),
             ],
         ),
         migrations.CreateModel(
-            name='File',
+            name="File",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(blank=True, max_length=100, null=True)),
-                ('uploaded_at', models.DateTimeField(auto_now_add=True)),
-                ('file', models.FileField(upload_to=apps.files.utils.file_utils.content_file_name)),
-                ('file_type', models.CharField(blank=True, choices=[('image', 'Image'), ('video', 'Video'), ('document', 'Document'), ('audio', 'Audio'), ('other', 'Other')], max_length=10, null=True)),
-                ('file_size', models.PositiveIntegerField(default=1)),
-                ('file_extension', models.CharField(blank=True, max_length=10, null=True)),
-                ('short_description', models.CharField(blank=True, max_length=2000, null=True)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(blank=True, max_length=100, null=True)),
+                ("uploaded_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "file",
+                    models.FileField(
+                        upload_to=apps.files.utils.file_utils.content_file_name
+                    ),
+                ),
+                (
+                    "file_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("image", "Image"),
+                            ("video", "Video"),
+                            ("document", "Document"),
+                            ("audio", "Audio"),
+                            ("other", "Other"),
+                        ],
+                        max_length=10,
+                        null=True,
+                    ),
+                ),
+                ("file_size", models.PositiveIntegerField(default=1)),
+                (
+                    "file_extension",
+                    models.CharField(blank=True, max_length=10, null=True),
+                ),
+                (
+                    "short_description",
+                    models.CharField(blank=True, max_length=2000, null=True),
+                ),
             ],
         ),
     ]

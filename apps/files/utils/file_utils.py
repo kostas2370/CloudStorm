@@ -1,20 +1,20 @@
 def get_file_type(ext: str) -> str:
     extension_mapping = {
-        'image': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg', 'webp', 'jfif'],
-        'video': ['mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv', 'webm'],
-        'document': ['pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'],
-        'audio': ['mp3', 'wav', 'aac', 'flac', 'ogg', 'm4a'],
+        "image": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "jfif"],
+        "video": ["mp4", "avi", "mov", "mkv", "flv", "wmv", "webm"],
+        "document": ["pdf", "doc", "docx", "txt", "xls", "xlsx", "ppt", "pptx", "csv"],
+        "audio": ["mp3", "wav", "aac", "flac", "ogg", "m4a"],
     }
 
     for file_type, extensions in extension_mapping.items():
         if ext in extensions:
             return file_type
 
-    return 'other'
+    return "other"
 
 
 def content_file_name(instance, filename: str) -> str:
-    return '/'.join(['uploads', instance.group.name, filename])
+    return "/".join(["uploads", instance.group.name, filename])
 
 
 def generate_filename(file, target_format: str = "") -> str:
@@ -29,19 +29,21 @@ def generate_filename(file, target_format: str = "") -> str:
     """
     try:
         filename = file.data_extraction(prompt)
-        file.create_extracted_data(name = "filename_generation", data = filename)
-    except Exception as exc:
+        file.create_extracted_data(name="filename_generation", data=filename)
+    except Exception:
         return None
 
     return filename
 
 
 def generate_short_description(file):
-    prompt = f"""
+    prompt = """
      Based on the content of the file below, generate a short description, Maximum 1000 characters.
     """
     short_description = file.data_extraction(prompt)
-    file.create_extracted_data(name = "short_description_generation", data = short_description)
+    file.create_extracted_data(
+        name="short_description_generation", data=short_description
+    )
     return short_description
 
 
@@ -51,14 +53,12 @@ def generate_tags(file):
     Return only the tags, nothing else. Be as generic as possible. If you can not generate tags return tag other
     """
     tags = file.data_extraction(prompt)
-    file.create_extracted_data(name = "tags_generation", data = tags)
-    return tags.split(',')
+    file.create_extracted_data(name="tags_generation", data=tags)
+    return tags.split(",")
 
 
 def extract_data(file, user_prompt):
     prompt = f"Extract {user_prompt} from the file content. Return only the data."
     data = file.data_extraction(prompt)
-    file.create_extracted_data(name = "extracted_data", data = data)
+    file.create_extracted_data(name="extracted_data", data=data)
     return data
-
-

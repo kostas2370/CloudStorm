@@ -6,24 +6,35 @@ import taggit.managers
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('groups', '0001_initial'),
-        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
-        ('files', '0001_initial'),
+        ("groups", "0001_initial"),
+        (
+            "taggit",
+            "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
+        ),
+        ("files", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='file',
-            name='group',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='files', to='groups.group'),
+            model_name="file",
+            name="group",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="files",
+                to="groups.group",
+            ),
         ),
         migrations.AddField(
-            model_name='file',
-            name='tags',
-            field=taggit.managers.TaggableManager(help_text='A comma-separated list of tags.', through='groups.UUIDTaggedItem', to='taggit.Tag', verbose_name='Tags'),
+            model_name="file",
+            name="tags",
+            field=taggit.managers.TaggableManager(
+                help_text="A comma-separated list of tags.",
+                through="groups.UUIDTaggedItem",
+                to="taggit.Tag",
+                verbose_name="Tags",
+            ),
         ),
     ]

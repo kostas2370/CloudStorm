@@ -7,33 +7,46 @@ import taggit.managers
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('groups', '0001_initial'),
-        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
+        ("groups", "0001_initial"),
+        (
+            "taggit",
+            "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='groupuser',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="groupuser",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AddField(
-            model_name='group',
-            name='created_by',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            model_name="group",
+            name="created_by",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='group',
-            name='tags',
-            field=taggit.managers.TaggableManager(help_text='A comma-separated list of tags.', through='groups.UUIDTaggedItem', to='taggit.Tag', verbose_name='Tags'),
+            model_name="group",
+            name="tags",
+            field=taggit.managers.TaggableManager(
+                help_text="A comma-separated list of tags.",
+                through="groups.UUIDTaggedItem",
+                to="taggit.Tag",
+                verbose_name="Tags",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='groupuser',
-            unique_together={('user', 'group')},
+            name="groupuser",
+            unique_together={("user", "group")},
         ),
     ]

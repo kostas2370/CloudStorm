@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('files', '0003_initial'),
+        ("files", "0003_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='file',
-            name='status',
-            field=models.CharField(choices=[('ready', 'Ready'), ('generate', 'Generate')], default='ready', max_length=20),
+            model_name="file",
+            name="status",
+            field=models.CharField(
+                choices=[("ready", "Ready"), ("generate", "Generate")],
+                default="ready",
+                max_length=20,
+            ),
         ),
     ]

@@ -7,7 +7,13 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_create_user():
-    user = User.objects.create_user(username="testuser", email="test@example.com", password="password123", first_name="John", last_name="Doe")
+    user = User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="password123",
+        first_name="John",
+        last_name="Doe",
+    )
     assert user.username == "testuser"
     assert user.email == "test@example.com"
     assert user.check_password("password123")
@@ -18,25 +24,41 @@ def test_create_user():
 
 @pytest.mark.django_db
 def test_user_str():
-    user = User.objects.create_user(username="testuser", email="test@example.com", password="password123")
+    user = User.objects.create_user(
+        username="testuser", email="test@example.com", password="password123"
+    )
     assert str(user) == "testuser"
 
 
 @pytest.mark.django_db
 def test_user_full_name():
-    user = User.objects.create_user(username="testuser", email="test@example.com", first_name="John", last_name="Doe", password="password123")
+    user = User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        first_name="John",
+        last_name="Doe",
+        password="password123",
+    )
     assert user.get_full_name() == "John Doe"
 
 
 @pytest.mark.django_db
 def test_user_short_name():
-    user = User.objects.create_user(username="testuser", email="test@example.com", first_name="John", last_name="Doe", password="password123")
+    user = User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        first_name="John",
+        last_name="Doe",
+        password="password123",
+    )
     assert user.get_short_name() == "John"
 
 
 @pytest.mark.django_db
 def test_get_tokens():
-    user = User.objects.create_user(username="testuser", email="test@example.com", password="password123")
+    user = User.objects.create_user(
+        username="testuser", email="test@example.com", password="password123"
+    )
     tokens = user.get_tokens()
     assert "access" in tokens
     assert "refresh" in tokens

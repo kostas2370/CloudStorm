@@ -4,19 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('groups', '0002_initial'),
+        ("groups", "0002_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='groupuser',
-            name='can_view',
+            model_name="groupuser",
+            name="can_view",
         ),
         migrations.AddField(
-            model_name='groupuser',
-            name='can_edit',
+            model_name="groupuser",
+            name="can_edit",
             field=models.BooleanField(default=False),
         ),
     ]
