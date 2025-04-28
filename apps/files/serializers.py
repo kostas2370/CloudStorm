@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import File, ExtractedData
-from apps.groups.models import Group
 from taggit.serializers import (TagListSerializerField,
                                 TaggitSerializer)
 
@@ -42,18 +41,20 @@ class MultiFileUploadSerializer(serializers.Serializer):
         child=serializers.FileField(),
         write_only=True
     )
-    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all())
     tags = serializers.CharField(max_length = 2000, required = False)
     ai_enabled = serializers.BooleanField(default = False)
 
     def create(self, validated_data):
         files = validated_data.pop('files')
-        user_group = validated_data.get('group')
+        user_group = self.context["group"]
         tags = validated_data.get('tags', '').split(',')
         ai_enabled = validated_data.get('ai_enabled')
         uploaded_by = self.context['request'].user
 
-        file_instances = [File.objects.create(file = file, group = user_group, uploaded_by = uploaded_by) for file in files]
+        if not group:
+            raise serializers.ValidationError("You need to add a group in query params !")
+
+        file_instances = [File.objects.create(file = file, group_id = user_group, uploaded_by = uploaded_by) for file in files]
 
         task_group = group(process_file.s(file.id, tags, ai_enabled) for file in file_instances)
         result = task_group.apply_async()

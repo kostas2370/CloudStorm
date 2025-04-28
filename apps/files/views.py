@@ -19,8 +19,6 @@ from rest_framework.views import APIView
 from azure.storage.blob import BlobServiceClient
 from django.http import StreamingHttpResponse
 
-
-
 import zipfile
 import os
 import tempfile
@@ -55,7 +53,8 @@ class FilesViewSet(ModelViewSet):
                               "retrieve": [IsAuthenticated(), CanAccessPrivateGroup()],
                               "mass_file_delete": [IsAuthenticated(), CanMassDelete()],
                               "partial_update": [IsAuthenticated(), CanEdit()],
-                              "zip_upload": [IsAuthenticated(), CanAdd()]}
+                              "zip_upload": [IsAuthenticated(), CanAdd()],
+                              "ai_generate": [IsAuthenticated(), CanEdit()]}
 
         return permission_mapping.get(self.action, [IsAuthenticated()])
 
@@ -70,7 +69,9 @@ class FilesViewSet(ModelViewSet):
         return queryset
 
     def create(self, request, *args, **kwargs):
-        serializer = MultiFileUploadSerializer(data=request.data, context={"request": request})
+        serializer = MultiFileUploadSerializer(data=request.data, context={"request": request,
+                                                                           "group": request.query_params.get("group")})
+
         if serializer.is_valid():
             files = serializer.save()
             return Response({"message": "Files uploaded successfully", "files": [file.id for file in files]},
@@ -114,11 +115,12 @@ class FilesViewSet(ModelViewSet):
                         files.append(content_file)
 
                 serializer_data = {'files': files,
-                                   'group': request.data.get('group'),
                                    'tags': request.data.get('tags', ''),
                                    'ai_enabled': request.data.get('ai_enabled', False)}
 
-                serializer = MultiFileUploadSerializer(data = serializer_data, context = {'request': request})
+                serializer = MultiFileUploadSerializer(data = serializer_data,
+                                                       context = {'request': request,
+                                                                  "group": request.query_params.get("group")})
                 serializer.is_valid(raise_exception = True)
                 file_instances = serializer.save()
 

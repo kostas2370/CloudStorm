@@ -4,12 +4,13 @@ from apps.groups.models import GroupUser, Group
 
 
 class CanDelete(BasePermission):
+    message = "You need to have the delete permission for this group!"
     def has_object_permission(self, request, view, obj):
-        gu = GroupUser.objects.filter(user = request.user, group = obj.group).first()
-        if not gu:
+        if obj.status == "generate":
+            self.message = "You can not Delete when status is generate"
             return False
-
-        return gu.can_delete
+        gu = GroupUser.objects.filter(user = request.user, group = obj.group, can_delete = True)
+        return gu.exists()
 
 
 class CanAdd(BasePermission):
@@ -22,17 +23,21 @@ class CanAdd(BasePermission):
 
 
 class CanView(BasePermission):
+
     def has_permission(self, request, view):
         return GroupUser.objects.filter(user = request.user, group = request.query_params.get('group')).exists()
 
 
 class CanEdit(BasePermission):
-    def has_permission(self, request, view):
+    message = "You need to have the edit permission for this group!"
 
-        gu = GroupUser.objects.filter(user = request.user, group = request.query_params.get('group')).first()
-        if not gu:
+    def has_object_permission(self, request, view, obj):
+        if obj.status == "generate":
+            self.message = "You can not Delete when status is generate"
             return False
-        return gu.can_edit
+
+        gu = GroupUser.objects.filter(user = request.user, group = obj.group, can_edit = True)
+        return gu.exists()
 
 
 class CanList(BasePermission):
