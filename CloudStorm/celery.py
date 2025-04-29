@@ -3,7 +3,7 @@ import os
 from celery import Celery
 
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CloudStorm.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CloudStorm.settings.local")
 
 
 app = Celery("CloudStorm")

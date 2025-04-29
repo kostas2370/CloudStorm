@@ -6,9 +6,11 @@ from .utils.file_utils import (
 )
 from celery import shared_task
 from channels.layers import get_channel_layer
-
+import logging
 
 channel_layer = get_channel_layer()
+
+logger = logging.Logger("CloudStorm logger")
 
 
 @shared_task
@@ -25,7 +27,7 @@ def process_file(file_id, tags, ai_enabled):
                 file_instance.tags.add(generated_tag)
             file_instance.save()
         except Exception as exc:
-            print(exc)
+            logger.error(exc)
 
     for tag in tags:
         if tag:

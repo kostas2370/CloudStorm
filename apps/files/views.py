@@ -3,9 +3,13 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
+from django.http import StreamingHttpResponse
+from django.core.files.base import ContentFile
+
 
 from .models import File
 from .serializers import (
@@ -22,17 +26,19 @@ from .utils.file_utils import (
     extract_data,
 )
 
-from apps.groups.models import GroupUser
-from CloudStorm.paginator import StandardResultsSetPagination
 from apps.groups.permissions import CanAccessPrivateGroup
-from rest_framework.views import APIView
+from apps.groups.models import GroupUser
+
+from CloudStorm.paginator import StandardResultsSetPagination
 from azure.storage.blob import BlobServiceClient
-from django.http import StreamingHttpResponse
 
 import zipfile
 import os
 import tempfile
-from django.core.files.base import ContentFile
+
+import logging
+
+logger = logging.Logger("CloudStorm Logger")
 
 
 class FilesViewSet(ModelViewSet):
@@ -97,6 +103,7 @@ class FilesViewSet(ModelViewSet):
                 },
                 status=201,
             )
+        logger.error(serializer.errors)
         return Response(serializer.errors, status=400)
 
     @action(methods=["DELETE"], detail=False)
@@ -107,6 +114,7 @@ class FilesViewSet(ModelViewSet):
                 id__in=to_delete, group_id=request.query_params.get("group")
             ).delete()
         except Exception as exc:
+            logger.error(exc)
             return Response({"message": f"Error : {exc}"}, status=400)
 
         return Response({"message": "Files got deleted !"}, status=204)
@@ -222,5 +230,5 @@ class SecureAzureBlobView(APIView):
             return response
 
         except Exception as e:
-            print(e)
+            logger.error(e)
             return Response({"message": "File not found !"}, status=404)

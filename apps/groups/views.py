@@ -2,9 +2,13 @@ from rest_framework import filters
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
+from django.core.mail import send_mail
+from django.conf import settings
+from django.http import StreamingHttpResponse
 
 from .models import Group, GroupUser
 from .serializers import GroupSerializer, GroupListsSerializer
@@ -17,11 +21,11 @@ from .permissions import (
 
 import io
 import zipfile
-from django.conf import settings
-from django.http import StreamingHttpResponse
+import logging
+
 from azure.storage.blob import BlobServiceClient
-from rest_framework.decorators import action
-from django.core.mail import send_mail
+
+logger = logging.Logger("CloudStorm Logger")
 
 
 class GroupsViewSet(ModelViewSet):
@@ -166,7 +170,7 @@ class GroupsViewSet(ModelViewSet):
                     zip_file.writestr(filename, file_data)
 
                 except Exception as e:
-                    print(f"Error downloading blob {blob_path}: {e}")
+                    logger.error(f"Error downloading blob {blob_path}: {e}")
                     continue
 
         zip_buffer.seek(0)

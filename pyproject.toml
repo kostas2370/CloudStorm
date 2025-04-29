@@ -10,7 +10,7 @@ authors = [
   { name="Konstantinos Damianos", email="kostas2372@gmail.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "Django~=4.2.18",
     "djangorestframework~=3.15.2",
@@ -34,10 +34,14 @@ dependencies = [
     "celery==5.2.7",
     "django_celery_beat",
     "redis",
-    "channels-redis"
+    "channels-redis",
+    "django-debug-toolbar"
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest~=8.3.4"
 ]
+
+[tool.ruff]
+exclude = ["CloudStorm/settings/"]
