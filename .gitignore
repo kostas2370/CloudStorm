@@ -139,3 +139,5 @@ GitHub.sublime-settings
 /.ruff_cache/
 
 uv.lock
+
+.idea
