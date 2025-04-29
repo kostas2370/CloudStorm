@@ -16,6 +16,4 @@ repos:
       - id: bandit
         args:
           - -r
-          - .
-          - -x
-          - "**/tests/*"
+          - ./apps
