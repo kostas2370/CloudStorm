@@ -1,6 +1,5 @@
 from rest_framework.permissions import BasePermission
-from django.shortcuts import get_object_or_404
-from apps.groups.models import GroupUser, Group
+from apps.groups.models import GroupUser
 
 
 class CanDelete(BasePermission):
@@ -26,13 +25,6 @@ class CanAdd(BasePermission):
         return gu.can_add or gu.role == "admin"
 
 
-class CanView(BasePermission):
-    def has_permission(self, request, view):
-        return GroupUser.objects.filter(
-            user=request.user, group=request.query_params.get("group")
-        ).exists()
-
-
 class CanEdit(BasePermission):
     message = "You need to have the edit permission for this group!"
 
@@ -45,22 +37,16 @@ class CanEdit(BasePermission):
         return gu.exists()
 
 
-class CanList(BasePermission):
-    def has_permission(self, request, view):
-        group = request.query_params.get("group")
-        if not group:
-            return True
+class CanRetrieve(BasePermission):
+    message = "You need to be member to retrieve the file!!"
 
-        gu = GroupUser.objects.filter(user=request.user, group__id=group).first()
-        if not gu:
-            return False
-
-        obj = get_object_or_404(Group, pk=group)
-
-        return not obj.is_private or (obj.is_user_member(request.user))
+    def has_object_permission(self, request, view, obj):
+        return obj.group.is_user_member(request.user) or not obj.group.is_private
 
 
 class CanMassDelete(BasePermission):
+    message = "You need to be member of the group, with delete permission!"
+
     def has_permission(self, request, view):
         group = request.query_params.get("group")
 

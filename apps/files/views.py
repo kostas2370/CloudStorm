@@ -18,7 +18,7 @@ from .serializers import (
     FileListSerializer,
     FilePartialUpdateSerializer,
 )
-from .permissions import CanAdd, CanList, CanEdit, CanDelete, CanMassDelete, CanView
+from .permissions import CanAdd, CanEdit, CanDelete, CanMassDelete, CanRetrieve
 from .utils.file_utils import (
     generate_filename,
     generate_short_description,
@@ -52,8 +52,10 @@ class FilesViewSet(ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(
-            group__in=GroupUser.objects.filter(user=self.request.user).values("group")
-        )
+            group_id__in=GroupUser.objects.filter(user=self.request.user).values(
+                "group_id"
+            )
+        ).prefetch_related("group")
 
     def get_serializer_class(self):
         serializer_mapping = {
@@ -68,8 +70,8 @@ class FilesViewSet(ModelViewSet):
         permission_mapping = {
             "create": [IsAuthenticated(), CanAccessPrivateGroup(), CanAdd()],
             "destroy": [IsAuthenticated(), CanAccessPrivateGroup(), CanDelete()],
-            "list": [IsAuthenticated(), CanAccessPrivateGroup(), CanList()],
-            "retrieve": [IsAuthenticated(), CanAccessPrivateGroup()],
+            "list": [IsAuthenticated(), CanAccessPrivateGroup()],
+            "retrieve": [IsAuthenticated(), CanRetrieve()],
             "mass_file_delete": [IsAuthenticated(), CanMassDelete()],
             "partial_update": [IsAuthenticated(), CanEdit()],
             "zip_upload": [IsAuthenticated(), CanAdd()],
@@ -210,11 +212,17 @@ class FilesViewSet(ModelViewSet):
 
 
 class SecureAzureBlobView(APIView):
-    permission_classes = [IsAuthenticated, CanView]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, group_name, filename):
         try:
             file_path = f"uploads/{group_name}/{filename}"
+            file = File.objects.get(file=file_path)
+            if not file.check_user_access(request.user):
+                return Response(
+                    {"message": "You do not have access to this file !"}, status=401
+                )
+
             blob_service_client = BlobServiceClient.from_connection_string(
                 settings.AZURE_CONNECTION_STRING
             )

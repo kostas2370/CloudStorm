@@ -107,6 +107,9 @@ class File(models.Model):
             file=self, name=name, data=data, hidden_from_user=hidden_from_user
         )
 
+    def check_user_access(self, user):
+        return self.group.is_user_member(user)
+
 
 class ExtractedData(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
