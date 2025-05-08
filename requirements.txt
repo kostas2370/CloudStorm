@@ -24,3 +24,4 @@ django_celery_beat
 celery[redis]
 channels-redis
 django-debug-toolbar
+gunicorn

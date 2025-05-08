@@ -11,10 +11,15 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   api:
     build: .
-    stdin_open: true
-    tty: true
     command: /startdjango
     ports:
       - "8000:8000"
@@ -24,19 +29,13 @@ services:
       - .env
     depends_on:
       - db
-
-  redis-stack-server:
-    image: redis/redis-stack-server:latest
-    container_name: redis-stack-server
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
+      - redis
 
   celery:
     build: .
     command: /startceleryworker
-
     volumes:
       - .:/app
     depends_on:
-      - redis-stack-server
+      - redis
+      - db

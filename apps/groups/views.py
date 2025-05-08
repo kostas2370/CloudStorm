@@ -6,7 +6,6 @@ from rest_framework.decorators import action
 
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-from django.core.mail import send_mail
 from django.conf import settings
 from django.http import StreamingHttpResponse
 
@@ -24,6 +23,7 @@ import zipfile
 import logging
 
 from azure.storage.blob import BlobServiceClient
+from apps.users.tasks import send_email
 
 logger = logging.Logger("CloudStorm Logger")
 
@@ -96,11 +96,10 @@ class GroupsViewSet(ModelViewSet):
             return Response({"error": "User is already a member"}, status=400)
 
         GroupUser.objects.create(user=user, group=group, **data)
-        send_mail(
+        send_email.delay(
             subject="You got added to a group",
             recipient_list=[user.email],
             message=f"You got added to a group named : {group.name}",
-            from_email=settings.EMAIL_HOST_USER,
         )
 
         return Response({"message": "User added successfully!"})
@@ -123,6 +122,11 @@ class GroupsViewSet(ModelViewSet):
                 {"error": "You do not have permission to remove other group admin"},
                 status=400,
             )
+        send_email.delay(
+            subject="You have been removed from a group",
+            recipient_list=[group_user.user.email],
+            message=f"You got removed from a group named : {group.name}",
+        )
 
         group_user.delete()
 

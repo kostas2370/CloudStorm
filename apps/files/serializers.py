@@ -1,11 +1,9 @@
 from rest_framework import serializers
-from .models import File, ExtractedData
 from taggit.serializers import TagListSerializerField, TaggitSerializer
-
 from django.conf import settings
-
 from celery import group
 from .tasks import process_file
+from .models import File, ExtractedData
 
 
 class AzureBlobFileField(serializers.FileField):

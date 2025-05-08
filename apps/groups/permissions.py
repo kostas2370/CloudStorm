@@ -4,7 +4,7 @@ from apps.files.models import File
 
 
 class IsGroupAdmin(BasePermission):
-    message = "You have to be admin to do this action"
+    message = "You must be a group admin to perform this action."
 
     def has_object_permission(self, request, view, obj):
         group_user = GroupUser.objects.filter(group=obj, user=request.user).first()
@@ -12,7 +12,7 @@ class IsGroupAdmin(BasePermission):
 
 
 class IsGroupUser(BasePermission):
-    message = "You have to be member of the group to do this action"
+    message = "You must be a member of the group to perform this action."
 
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, File):
@@ -37,7 +37,7 @@ class CanAccessPrivateGroup(BasePermission):
 
 
 class IsVerifiedUser(BasePermission):
-    message = "You have to be verified to do this action"
+    message = "You must be a verified user to perform this action."
 
     def has_permission(self, request, view):
         return request.user.is_verified

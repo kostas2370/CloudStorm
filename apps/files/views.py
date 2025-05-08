@@ -18,7 +18,14 @@ from .serializers import (
     FileListSerializer,
     FilePartialUpdateSerializer,
 )
-from .permissions import CanAdd, CanEdit, CanDelete, CanMassDelete, CanRetrieve
+from .permissions import (
+    CanAdd,
+    CanEdit,
+    CanDelete,
+    CanMassDelete,
+    CanRetrieve,
+    FileAccessPermission,
+)
 from .utils.file_utils import (
     generate_filename,
     generate_short_description,
@@ -212,17 +219,11 @@ class FilesViewSet(ModelViewSet):
 
 
 class SecureAzureBlobView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [FileAccessPermission]
 
     def get(self, request, group_name, filename):
         try:
             file_path = f"uploads/{group_name}/{filename}"
-            file = File.objects.get(file=file_path)
-            if not file.check_user_access(request.user):
-                return Response(
-                    {"message": "You do not have access to this file !"}, status=401
-                )
-
             blob_service_client = BlobServiceClient.from_connection_string(
                 settings.AZURE_CONNECTION_STRING
             )

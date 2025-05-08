@@ -38,7 +38,7 @@ class GroupListsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Group
-        exclude = ("passcode",)
+        fields = "__all__"
 
 
 class GroupUserSerializer(serializers.ModelSerializer):

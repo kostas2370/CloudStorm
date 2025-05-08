@@ -24,4 +24,6 @@ RUN pip install -r requirements.txt --ignore-installed
 COPY scripts/startdjango.sh /startdjango
 COPY scripts/startceleryworker.sh /startceleryworker
 
+
 EXPOSE 8000
+CMD ["/startdjango"]

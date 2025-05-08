@@ -108,6 +108,9 @@ class File(models.Model):
         )
 
     def check_user_access(self, user):
+        if not self.group.is_private:
+            return True
+
         return self.group.is_user_member(user)
 
 

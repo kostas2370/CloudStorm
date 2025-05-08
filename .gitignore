@@ -141,3 +141,4 @@ GitHub.sublime-settings
 uv.lock
 
 .idea
+/CloudStorm/staticfiles/

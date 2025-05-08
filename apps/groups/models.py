@@ -1,9 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from CloudStorm.utils import encrypt, decrypt
-from encrypted_model_fields.fields import (
-    EncryptedCharField,
-)
+from django.contrib.auth.models import AnonymousUser
+
 import uuid
 from taggit.managers import TaggableManager
 from taggit.models import GenericUUIDTaggedItemBase, TaggedItemBase
@@ -19,7 +17,6 @@ class Group(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=40)
     is_private = models.BooleanField(default=False)
-    passcode = EncryptedCharField(max_length=2000, blank=True, null=True)
     tags = TaggableManager(through=UUIDTaggedItem)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -31,22 +28,9 @@ class Group(models.Model):
     def __str__(self):
         return self.name
 
-    def check_passcode(self, passcode):
-        if not self.is_private:
-            return True
-
-        if self.passcode:
-            code = decrypt(self.passcode)
-            return code == passcode
-
-        return True
-
-    def save(self, *args, **kwargs):
-        if self.passcode:
-            self.passcode = encrypt(self.passcode)
-        super().save(*args, **kwargs)
-
     def is_user_member(self, user):
+        if isinstance(user, AnonymousUser):
+            return False
         return GroupUser.objects.filter(user=user, group=self).exists()
 
 
