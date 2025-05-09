@@ -35,7 +35,8 @@ dependencies = [
     "django_celery_beat",
     "redis",
     "channels-redis",
-    "django-debug-toolbar"
+    "django-debug-toolbar",
+    "django-cors-headers"
 ]
 
 [project.optional-dependencies]

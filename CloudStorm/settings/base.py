@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.files",
     "django_celery_beat",
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -41,6 +42,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
+    "django.middleware.common.CommonMiddleware"
 ]
 
 ROOT_URLCONF = "CloudStorm.urls"
