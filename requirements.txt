@@ -11,7 +11,6 @@ azure-storage-blob ~= 12.22.0
 djangorestframework-simplejwt
 psycopg2-binary
 drf-yasg
-
 pytest~=8.3.4
 django-filter
 openai

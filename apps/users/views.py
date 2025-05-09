@@ -34,7 +34,21 @@ class UserRegisterView(generics.GenericAPIView):
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            if "username" in serializer.errors:
+                return Response(
+                    dict(message=serializer.errors["username"][0]), status=400
+                )
+            if "email" in serializer.errors:
+                return Response(
+                    dict(message=f"Email : {serializer.errors['email'][0]}"), status=400
+                )
+            if "password" in serializer.errors:
+                return Response(
+                    dict(message=f"Password : {serializer.errors['password'][0]}"),
+                    status=400,
+                )
+
         user = serializer.save()
         token = tokens.RefreshToken.for_user(user).access_token
         current_site = get_current_site(request).domain

@@ -7,7 +7,7 @@ name = "cloudstorm"
 version = "0.1.0"
 description = "cloudstorm project."
 authors = [
-  { name="Konstantinos Damianos", email="kostas2372@gmail.com" }
+  { name="Konstantinos Damianos", email="kostas2372@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.11"

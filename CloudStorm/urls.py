@@ -6,6 +6,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
 from django.conf.urls.static import static
+from CloudStorm import views as error_views  # Adjust if needed
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -19,6 +20,10 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
+
+
+handler404 = error_views.custom_404
+handler500 = error_views.custom_500
 
 urlpatterns = [
     path(

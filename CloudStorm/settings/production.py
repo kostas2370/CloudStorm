@@ -2,8 +2,6 @@ from .base import *
 from datetime import timedelta
 import os
 
-DEBUG = False
-
 ALLOWED_HOSTS = ["yourdomain.com"]
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
