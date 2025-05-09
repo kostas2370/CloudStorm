@@ -6,7 +6,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.middleware import csrf
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from .tasks import send_email
@@ -85,29 +84,8 @@ class LoginView(generics.GenericAPIView):
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.is_valid(raise_exception=True)
 
         response = Response(serializer.data, status=status.HTTP_200_OK)
-        response.set_cookie(
-            "access_token",
-            serializer.data["tokens"]["access"],
-            expires=settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"],
-            httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
-            secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
-            samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
-        )
-
-        response.set_cookie(
-            "refresh_token",
-            serializer.data["tokens"]["refresh"],
-            expires=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
-            samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
-            httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
-            secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
-        )
-
-        response["X-CSRFToken"] = csrf.get_token(request)
-
         return response
 
 
@@ -115,7 +93,7 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
     serializer_class = CookieTokenRefreshSerializer
 
     def finalize_response(self, request, response, *args, **kwargs):
-        refresh = request.COOKIES.get("refresh_token")
+        refresh = request.data.get("refresh_token")
 
         if not refresh:
             response.data = {"Message": "You need to set refresh token"}
@@ -129,16 +107,6 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
             response.status_code = 400
             return super().finalize_response(request, response, *args, **kwargs)
 
-        if "access" in response.data:
-            response.set_cookie(
-                key="access_token",
-                value=response.data["access"],
-                expires=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
-                secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
-                httponly=settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"],
-            )
-
-        response["X-CSRFToken"] = request.COOKIES.get("csrftoken", "")
         return super().finalize_response(request, response, *args, **kwargs)
 
 
