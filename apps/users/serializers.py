@@ -21,23 +21,23 @@ def check_conditions(password: str) -> bool:
 
 
 class LoginSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(write_only=True)
+    email = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True)
     tokens = serializers.DictField(read_only=True)
 
     class Meta:
         model = get_user_model()
-        fields = ("username", "password", "tokens")
+        fields = ("email", "password", "tokens")
 
     def validate(self, attrs):
         request = self.context["request"]
-        username = attrs.get("username", "")
+        email = attrs.get("email", "")
         password = attrs.get("password", "")
 
-        if not username:
-            raise AuthenticationFailed("Υou need to add username")
+        if not email:
+            raise AuthenticationFailed("Email Required")
 
-        auser = authenticate(username=username, password=password, request=request)
+        auser = authenticate(email=email, password=password, request=request)
 
         if not auser:
             raise AuthenticationFailed("There is not a user with that credentials")

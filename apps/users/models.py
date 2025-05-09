@@ -1,22 +1,44 @@
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from encrypted_model_fields.fields import EncryptedCharField, EncryptedBooleanField
 from rest_framework_simplejwt.tokens import RefreshToken
 import uuid
 from django.db import models
 
 
-class User(AbstractUser, PermissionsMixin):
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("The Email must be set")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    username = models.CharField(max_length=200, unique=True)
     first_name = EncryptedCharField(max_length=20, blank=False)
     last_name = EncryptedCharField(max_length=20, blank=False)
     email = models.EmailField(unique=True)
     is_verified = EncryptedBooleanField(default=False)
 
-    REQUIRED_FIELDS = ["email"]
+    USERNAME_FIELD = "email"
+
+    objects = CustomUserManager()
 
     def __str__(self):
-        return self.username
+        return self.email
 
     def clean(self):
         super().clean()
