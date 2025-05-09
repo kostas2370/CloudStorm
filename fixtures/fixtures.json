@@ -6,6 +6,8 @@
       "password": "pbkdf2_sha256$320000$vi0Mdl0Nv9Z7ahjhYNCwPF$x42cfJjzkMkAdFr3C7iCsg3rJ1O3RlVUJSF40/5Y9Es=",
       "is_superuser": true,
       "email": "test@gmail.com",
-      "is_verified": true
+      "is_verified": true,
+       "first_name": "admin",
+       "last_name": "admin"
     }
   }]
