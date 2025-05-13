@@ -114,6 +114,9 @@ class FilesViewSet(ModelViewSet):
             400: OpenApiResponse(
                 description="Bad request – serializer validation failed"
             ),
+            403: OpenApiResponse(
+                description="User is not authenticated or lacks add permissions"
+            ),
         }
     )
     def create(self, request, *args, **kwargs):
@@ -140,6 +143,9 @@ class FilesViewSet(ModelViewSet):
         responses={
             204: OpenApiResponse(description="Files deleted successfully"),
             400: ErrorResponseSerializer,
+            403: OpenApiResponse(
+                description="User is not authenticated or lacks mass delete permissions"
+            ),
         },
     )
     @action(methods=["DELETE"], detail=False)
@@ -161,6 +167,9 @@ class FilesViewSet(ModelViewSet):
         responses={
             200: FileUploadResponseSerializer,
             400: ErrorResponseSerializer,
+            403: OpenApiResponse(
+                description="User is not authenticated or lacks add permissions"
+            ),
         },
     )
     @action(methods=["POST"], detail=False)
@@ -223,6 +232,9 @@ class FilesViewSet(ModelViewSet):
         responses={
             200: AIGenerateResponseSerializer,
             400: OpenApiResponse(description="Missing or invalid input data"),
+            403: OpenApiResponse(
+                description="User is not authenticated or lacks edit permissions"
+            ),
         },
     )
     @action(methods=["PATCH"], detail=True)
@@ -278,6 +290,7 @@ class SecureAzureBlobView(APIView):
         ],
         responses={
             200: OpenApiResponse(description="Streamed file download"),
+            403: OpenApiResponse(description="User does not have access to this file"),
             404: OpenApiResponse(description="File not found"),
         },
         description="Securely streams a file from Azure Blob Storage by group and filename.",

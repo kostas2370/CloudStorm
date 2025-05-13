@@ -94,6 +94,9 @@ class GroupsViewSet(ModelViewSet):
         responses={
             200: AddMemberResponseSerializer,
             400: OpenApiResponse(description="Validation or business logic error"),
+            403: OpenApiResponse(
+                description="User is not authenticated, verified, or not a group admin"
+            ),
         },
         description="Adds a user to the group using their email. Additional role and permissions can be provided.",
     )
@@ -137,6 +140,9 @@ class GroupsViewSet(ModelViewSet):
             400: OpenApiResponse(
                 description="Missing or invalid user_id, or permission error"
             ),
+            403: OpenApiResponse(
+                description="User is not authenticated, verified, or not a group admin"
+            ),
         },
         description="Removes a member from the group by UUID. Only admins can remove themselves or non-admin users.",
     )
@@ -174,6 +180,9 @@ class GroupsViewSet(ModelViewSet):
         responses={
             200: OpenApiResponse(description="User permissions updated"),
             400: OpenApiResponse(description="Invalid request data"),
+            403: OpenApiResponse(
+                description="User is not authenticated, verified, or not a group admin"
+            ),
         },
         description="Edit roles and permissions of members in a group.",
     )
@@ -195,6 +204,9 @@ class GroupsViewSet(ModelViewSet):
         methods=["GET"],
         responses={
             200: OpenApiResponse(description="ZIP file containing all group files"),
+            403: OpenApiResponse(
+                description="User is not authenticated or not a group member"
+            ),
             404: OpenApiResponse(description="No files found for this group"),
         },
         description="Downloads all files in the group as a ZIP archive.",
