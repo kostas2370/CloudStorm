@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
@@ -38,6 +39,16 @@ from apps.groups.models import GroupUser
 
 from CloudStorm.paginator import StandardResultsSetPagination
 from azure.storage.blob import BlobServiceClient
+
+from .swagger_serializers import (
+    FileUploadResponseSerializer,
+    MassFileDeleteRequestSerializer,
+    ErrorResponseSerializer,
+    ZipUploadRequestSerializer,
+    AIGenerateRequestSerializer,
+    AIGenerateResponseSerializer,
+)
+
 
 import zipfile
 import os
@@ -97,6 +108,14 @@ class FilesViewSet(ModelViewSet):
 
         return queryset
 
+    @extend_schema(
+        responses={
+            201: FileUploadResponseSerializer,
+            400: OpenApiResponse(
+                description="Bad request – serializer validation failed"
+            ),
+        }
+    )
     def create(self, request, *args, **kwargs):
         serializer = MultiFileUploadSerializer(
             data=request.data,
@@ -115,6 +134,14 @@ class FilesViewSet(ModelViewSet):
         logger.error(serializer.errors)
         return Response(serializer.errors, status=400)
 
+    @extend_schema(
+        methods=["DELETE"],
+        request=MassFileDeleteRequestSerializer,
+        responses={
+            204: OpenApiResponse(description="Files deleted successfully"),
+            400: ErrorResponseSerializer,
+        },
+    )
     @action(methods=["DELETE"], detail=False)
     def mass_file_delete(self, request):
         to_delete = request.data.get("to_delete", [])
@@ -128,6 +155,14 @@ class FilesViewSet(ModelViewSet):
 
         return Response({"message": "Files got deleted !"}, status=204)
 
+    @extend_schema(
+        methods=["POST"],
+        request=ZipUploadRequestSerializer,
+        responses={
+            200: FileUploadResponseSerializer,
+            400: ErrorResponseSerializer,
+        },
+    )
     @action(methods=["POST"], detail=False)
     def zip_upload(self, request):
         zip_file = request.FILES.get("file")
@@ -175,13 +210,21 @@ class FilesViewSet(ModelViewSet):
                 return Response(
                     {
                         "message": "ZIP extracted and files uploaded successfully.",
-                        "file_ids": [file.id for file in file_instances],
+                        "files": [file.id for file in file_instances],
                     }
                 )
 
             except zipfile.BadZipFile:
                 return Response({"error": "Invalid ZIP file."}, status=400)
 
+    @extend_schema(
+        methods=["PATCH"],
+        request=AIGenerateRequestSerializer,
+        responses={
+            200: AIGenerateResponseSerializer,
+            400: OpenApiResponse(description="Missing or invalid input data"),
+        },
+    )
     @action(methods=["PATCH"], detail=True)
     def ai_generate(self, request, pk=None):
         obj = self.get_object()
@@ -221,6 +264,24 @@ class FilesViewSet(ModelViewSet):
 class SecureAzureBlobView(APIView):
     permission_classes = [FileAccessPermission]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="group_name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+            ),
+            OpenApiParameter(
+                name="filename", type=str, location=OpenApiParameter.PATH, required=True
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(description="Streamed file download"),
+            404: OpenApiResponse(description="File not found"),
+        },
+        description="Securely streams a file from Azure Blob Storage by group and filename.",
+    )
     def get(self, request, group_name, filename):
         try:
             file_path = f"uploads/{group_name}/{filename}"

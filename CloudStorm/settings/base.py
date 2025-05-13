@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "taggit",
     "storages",
-    "drf_yasg",
+    "drf_spectacular",
     "django_filters",
     "encrypted_model_fields",
     "apps.groups",
@@ -134,7 +134,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "EXCEPTION_HANDLER": 'CloudStorm.handlers.exception_handler',
-
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 AUTH_USER_MODEL = "users.User"
@@ -174,3 +174,23 @@ FIELD_ENCRYPTION_KEY = os.environ.get("FIELD_ENCRYPTION_KEY", "").encode()
 
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_BROKER_URL = "redis://redis:6379/0"
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Cloudstorm API Documentation',
+    'DESCRIPTION': 'Docs',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SECURITY": [{"BearerAuth": []}],
+    "AUTHENTICATION_WHITELIST": [],
+    "COMPONENTS": {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    },
+}

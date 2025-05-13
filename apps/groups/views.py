@@ -17,10 +17,18 @@ from .permissions import (
     CanAccessPrivateGroup,
     IsVerifiedUser,
 )
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from .swagger_seriallizers import (
+    EditGroupMemberSerializer,
+    AddMemberSerializer,
+    AddMemberResponseSerializer,
+)
 
 import io
 import zipfile
 import logging
+from uuid import UUID
+
 
 from azure.storage.blob import BlobServiceClient
 from apps.users.tasks import send_email
@@ -80,6 +88,15 @@ class GroupsViewSet(ModelViewSet):
 
         return queryset
 
+    @extend_schema(
+        methods=["POST"],
+        request=AddMemberSerializer,
+        responses={
+            200: AddMemberResponseSerializer,
+            400: OpenApiResponse(description="Validation or business logic error"),
+        },
+        description="Adds a user to the group using their email. Additional role and permissions can be provided.",
+    )
     @action(methods=["POST"], detail=True)
     def add_member(self, request, pk):
         group = self.get_object()
@@ -104,6 +121,25 @@ class GroupsViewSet(ModelViewSet):
 
         return Response({"message": "User added successfully!"})
 
+    @extend_schema(
+        methods=["DELETE"],
+        parameters=[
+            OpenApiParameter(
+                name="user_id",
+                type=UUID,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="UUID of the user to remove from the group",
+            )
+        ],
+        responses={
+            204: OpenApiResponse(description="User removed successfully"),
+            400: OpenApiResponse(
+                description="Missing or invalid user_id, or permission error"
+            ),
+        },
+        description="Removes a member from the group by UUID. Only admins can remove themselves or non-admin users.",
+    )
     @action(methods=["DELETE"], detail=True)
     def remove_member(self, request, _):
         group = self.get_object()
@@ -132,6 +168,15 @@ class GroupsViewSet(ModelViewSet):
 
         return Response({"message": "User removed successfully"}, status=204)
 
+    @extend_schema(
+        methods=["PUT"],
+        request=EditGroupMemberSerializer(many=True),
+        responses={
+            200: OpenApiResponse(description="User permissions updated"),
+            400: OpenApiResponse(description="Invalid request data"),
+        },
+        description="Edit roles and permissions of members in a group.",
+    )
     @action(methods=["PUT"], detail=True)
     def edit_members(self, request, pk):
         group = self.get_object()
@@ -146,6 +191,14 @@ class GroupsViewSet(ModelViewSet):
 
         return Response({"message": "Users permission got edited !"}, status=200)
 
+    @extend_schema(
+        methods=["GET"],
+        responses={
+            200: OpenApiResponse(description="ZIP file containing all group files"),
+            404: OpenApiResponse(description="No files found for this group"),
+        },
+        description="Downloads all files in the group as a ZIP archive.",
+    )
     @action(methods=["GET"], detail=True)
     def download_zip(self, request, pk):
         group = self.get_object()

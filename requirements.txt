@@ -10,7 +10,7 @@ azure-core ~= 1.30.2
 azure-storage-blob ~= 12.22.0
 djangorestframework-simplejwt
 psycopg2-binary
-drf-yasg
+drf-spectacular
 pytest~=8.3.4
 django-filter
 openai
