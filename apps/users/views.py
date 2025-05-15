@@ -13,6 +13,8 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt import tokens
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ParseError
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+
 
 import logging
 
@@ -32,6 +34,16 @@ class UserRegisterView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
     authentication_classes = []
 
+    @extend_schema(
+        request=RegisterSerializer,
+        responses={
+            201: UserSerializer,
+            400: OpenApiResponse(
+                description="Validation failed (username, email, or password)"
+            ),
+        },
+        description="Registers a new user and sends a verification email with a token link.",
+    )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
@@ -66,6 +78,22 @@ class VerifyEmail(generics.GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = VerifySerializer
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="token",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Verification token sent to user's email",
+            )
+        ],
+        responses={
+            200: OpenApiResponse(description="Email successfully verified"),
+            400: OpenApiResponse(description="Invalid, expired, or already-used token"),
+        },
+        description="Verifies a user's email using the token sent after registration.",
+    )
     def get(self, request):
         token = request.GET.get("token")
         try:
@@ -93,11 +121,24 @@ class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = (AllowAny,)
 
+    @extend_schema(
+        request=LoginSerializer,
+        responses={
+            200: LoginSerializer,
+            400: OpenApiResponse(
+                description="Invalid credentials or unverified account"
+            ),
+        },
+        description="Authenticates a user and returns access/refresh tokens if credentials are valid and the account is verified.",
+    )
     def post(self, request):
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": str(serializer.errors)}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         response = Response(serializer.data, status=status.HTTP_200_OK)
         return response
@@ -124,6 +165,15 @@ class CookieTokenRefreshView(jwt_views.TokenRefreshView):
         return super().finalize_response(request, response, *args, **kwargs)
 
 
+@extend_schema(
+    methods=["POST"],
+    request=None,
+    responses={
+        204: OpenApiResponse(description="Successfully logged out and tokens revoked"),
+        400: OpenApiResponse(description="Invalid or missing refresh token"),
+    },
+    description="Logs the user out by blacklisting the refresh token and deleting authentication cookies.",
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def logout_view(request):
