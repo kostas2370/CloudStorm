@@ -3,8 +3,16 @@ from taggit.serializers import TagListSerializerField, TaggitSerializer
 from .models import Group, GroupUser
 
 
+class GroupUserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = GroupUser
+        exclude = ("group", "id")
+
+
 class GroupSerializer(TaggitSerializer, serializers.ModelSerializer):
-    members = serializers.SerializerMethodField()
+    members = GroupUserSerializer(source="groupuser_set", many=True, read_only=True)
     created_by_username = serializers.CharField(
         source="created_by.username", read_only=True
     )
@@ -16,10 +24,6 @@ class GroupSerializer(TaggitSerializer, serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = "__all__"
-
-    def get_members(self, obj):
-        users = GroupUser.objects.filter(group_id=obj.id)
-        return GroupUserSerializer(users, many=True).data
 
     def create(self, validated_data):
         request_user = self.context["request"].user
@@ -39,11 +43,3 @@ class GroupListsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = "__all__"
-
-
-class GroupUserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=True)
-
-    class Meta:
-        model = GroupUser
-        exclude = ("group", "id")

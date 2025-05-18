@@ -89,6 +89,18 @@ class GroupsViewSet(ModelViewSet):
         return queryset
 
     @extend_schema(
+        request=GroupSerializer,
+        responses={
+            201: GroupSerializer,
+            400: OpenApiResponse(description="Validation error"),
+            403: OpenApiResponse(description="Unauthorized or permission denied"),
+        },
+        description="Creates a new group and assigns the creator as an admin member.",
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request)
+
+    @extend_schema(
         methods=["POST"],
         request=AddMemberSerializer,
         responses={
