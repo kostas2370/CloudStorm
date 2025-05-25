@@ -2,9 +2,6 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from taggit.managers import TaggableManager
 import os
-from encrypted_model_fields.fields import (
-    EncryptedTextField,
-)
 
 from .utils.data_extraction import (
     video_data_extraction,
@@ -122,7 +119,7 @@ class ExtractedData(models.Model):
     name = models.CharField(max_length=100)
     extraction_date = models.DateTimeField(auto_now_add=True)
     hidden_from_user = models.BooleanField(default=False)
-    data = EncryptedTextField()
+    data = models.TextField()
 
     def __str__(self):
         return f"{self.file.name}:{self.name}"

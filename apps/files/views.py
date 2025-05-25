@@ -1,4 +1,3 @@
-from rest_framework import filters
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -6,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
-from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from django.http import StreamingHttpResponse
 from django.core.files.base import ContentFile
@@ -49,11 +47,11 @@ from .swagger_serializers import (
     AIGenerateResponseSerializer,
 )
 
+from .filters import FileFilter
 
 import zipfile
 import os
 import tempfile
-
 import logging
 
 logger = logging.Logger("CloudStorm Logger")
@@ -62,11 +60,10 @@ logger = logging.Logger("CloudStorm Logger")
 class FilesViewSet(ModelViewSet):
     queryset = File.objects.all()
     serializer_class = FileSerializer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ["name", "file_type", "group"]
     search_fields = ["name", "short_description"]
     http_method_names = ["get", "post", "delete", "patch"]
     pagination_class = StandardResultsSetPagination
+    filterset_class = FileFilter
 
     def get_queryset(self):
         return self.queryset.filter(

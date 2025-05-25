@@ -1,16 +1,15 @@
-from rest_framework import filters
+from rest_framework import filters, status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
-from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from django.http import StreamingHttpResponse
 
-from .models import Group, GroupUser
-from .serializers import GroupSerializer, GroupListsSerializer
+from .models import Group
+from .serializers import GroupSerializer, GroupListsSerializer, AddMemberSerializer
 from .permissions import (
     IsGroupUser,
     IsGroupAdmin,
@@ -20,7 +19,6 @@ from .permissions import (
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from .swagger_seriallizers import (
     EditGroupMemberSerializer,
-    AddMemberSerializer,
     AddMemberResponseSerializer,
 )
 
@@ -70,6 +68,8 @@ class GroupsViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return GroupListsSerializer
+        if self.action == "add_member":
+            return
 
         return GroupSerializer
 
@@ -101,6 +101,27 @@ class GroupsViewSet(ModelViewSet):
         return super().create(request)
 
     @extend_schema(
+        responses={
+            200: GroupListsSerializer(many=True),
+            403: OpenApiResponse(description="Authentication or permission denied"),
+        },
+        description="Returns a list of groups that the authenticated user is a member of.",
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        responses={
+            204: OpenApiResponse(description="Group deleted successfully"),
+            403: OpenApiResponse(description="Permission denied — must be group admin"),
+            404: OpenApiResponse(description="Group not found"),
+        },
+        description="Deletes a group. Only admins of the group are allowed to perform this action.",
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
         methods=["POST"],
         request=AddMemberSerializer,
         responses={
@@ -115,26 +136,21 @@ class GroupsViewSet(ModelViewSet):
     @action(methods=["POST"], detail=True)
     def add_member(self, request, pk):
         group = self.get_object()
-        data = request.data.copy()
-        email = data.pop("user_email", None)
-        if not email:
-            return Response({"error": "User email is required"}, status=400)
-        user = get_user_model().objects.filter(email=email[0]).first()
-        if not user:
-            return Response({"error": "There is not user with this email"}, status=400)
+        serializer = AddMemberSerializer(data=request.data, context={"group": group})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        group_user = group.groupuser_set.filter(user=user).first()
-        if group_user:
-            return Response({"error": "User is already a member"}, status=400)
+        group_user = serializer.save()
 
-        GroupUser.objects.create(user=user, group=group, **data)
         send_email.delay(
             subject="You got added to a group",
-            recipient_list=[user.email],
-            message=f"You got added to a group named : {group.name}",
+            recipient_list=[group_user.user.email],
+            message=f"You got added to a group named: {group.name}",
         )
 
-        return Response({"message": "User added successfully!"})
+        return Response(
+            {"message": "User added successfully!"}, status=status.HTTP_201_CREATED
+        )
 
     @extend_schema(
         methods=["DELETE"],

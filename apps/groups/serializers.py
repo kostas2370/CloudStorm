@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from taggit.serializers import TagListSerializerField, TaggitSerializer
 from .models import Group, GroupUser
+from django.contrib.auth import get_user_model
 
 
 class GroupUserSerializer(serializers.ModelSerializer):
@@ -43,3 +44,35 @@ class GroupListsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = "__all__"
+
+
+class AddMemberSerializer(serializers.Serializer):
+    user_email = serializers.EmailField()
+    role = serializers.CharField(required=False)
+    can_add = serializers.BooleanField(required=False)
+    can_delete = serializers.BooleanField(required=False)
+
+    def validate_user_email(self, value):
+        user = get_user_model().objects.filter(email=value).first()
+        if not user:
+            raise serializers.ValidationError("No user with this email exists.")
+        return value
+
+        group = self.context.get("group")
+        if group and GroupUser.objects.filter(group=group, user=user).exists():
+            raise serializers.ValidationError("User is already a member of this group.")
+
+        return value
+
+    def create(self, validated_data):
+        group = self.context["group"]
+        user = get_user_model().objects.get(email=validated_data["user_email"])
+
+        group_user = GroupUser.objects.create(
+            group=group,
+            user=user,
+            role=validated_data.get("role", "member"),
+            can_add=validated_data.get("can_add", False),
+            can_delete=validated_data.get("can_delete", False),
+        )
+        return group_user

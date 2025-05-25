@@ -8,12 +8,5 @@ class EditGroupMemberSerializer(serializers.Serializer):
     can_delete = serializers.BooleanField(required=False)
 
 
-class AddMemberSerializer(serializers.Serializer):
-    user_email = serializers.EmailField()
-    role = serializers.CharField(required=False)
-    can_add = serializers.BooleanField(required=False)
-    can_delete = serializers.BooleanField(required=False)
-
-
 class AddMemberResponseSerializer(serializers.Serializer):
-    message = serializers.CharField()
+    message = serializers.EmailField()

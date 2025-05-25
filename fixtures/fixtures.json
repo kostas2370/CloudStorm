@@ -8,6 +8,8 @@
       "email": "test@gmail.com",
       "is_verified": true,
        "first_name": "admin",
-       "last_name": "admin"
+       "last_name": "admin",
+      "is_staff": true
+
     }
   }]
