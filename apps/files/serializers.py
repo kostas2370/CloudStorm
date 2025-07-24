@@ -90,3 +90,19 @@ class FilePartialUpdateSerializer(TaggitSerializer, serializers.ModelSerializer)
         model = File
         fields = ["id", "name", "tags", "short_description"]
         read_only_fields = ["id"]
+
+
+class GuestTaskSerializer(serializers.ModelSerializer):
+    extracted_data_count = serializers.SerializerMethodField()
+    latest_extracted_data_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = File
+        fields = ['id', 'name', 'group', 'uploaded_at', 'extracted_data_count', 'latest_extracted_data_name']
+
+    def get_extracted_data_count(self, obj):
+        return obj.extracted_data.count()
+
+    def get_latest_extracted_data_name(self, obj):
+        latest = obj.extracted_data.order_by('-extraction_date').first()
+        return latest.name if latest else None

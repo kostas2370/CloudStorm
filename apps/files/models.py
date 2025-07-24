@@ -123,3 +123,5 @@ class ExtractedData(models.Model):
 
     def __str__(self):
         return f"{self.file.name}:{self.name}"
+
+

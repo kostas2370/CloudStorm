@@ -16,6 +16,7 @@ from .serializers import (
     FileSerializer,
     FileListSerializer,
     FilePartialUpdateSerializer,
+    GuestTaskSerializer
 )
 from .permissions import (
     CanAdd,
@@ -270,6 +271,8 @@ class FilesViewSet(ModelViewSet):
         return Response({"extracted_data": extracted_data}, status=200)
 
 
+
+
 class SecureAzureBlobView(APIView):
     permission_classes = [FileAccessPermission]
 
@@ -312,3 +315,13 @@ class SecureAzureBlobView(APIView):
         except Exception as e:
             logger.error(e)
             return Response({"message": "File not found !"}, status=404)
+
+
+class GuestTaskView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_groups = GroupUser.objects.filter(user=request.user).values_list('group_id', flat=True)
+        files = File.objects.filter(group_id__in=user_groups)
+        serializer = GuestTaskSerializer(files, many=True)
+        return Response(serializer.data)
