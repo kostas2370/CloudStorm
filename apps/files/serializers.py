@@ -54,10 +54,10 @@ class MultiFileUploadSerializer(serializers.Serializer):
             )
 
         file_instances = [
-            File.objects.create(file=file, group_id=user_group, uploaded_by=uploaded_by)
+            File(file=file, group_id=user_group, uploaded_by=uploaded_by)
             for file in files
         ]
-
+        File.objects.bulk_create(file_instances)
         task_group = group(
             process_file.s(file.id, tags, ai_enabled) for file in file_instances
         )

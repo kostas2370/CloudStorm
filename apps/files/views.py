@@ -70,7 +70,7 @@ class FilesViewSet(ModelViewSet):
             group_id__in=GroupUser.objects.filter(user=self.request.user).values(
                 "group_id"
             )
-        ).prefetch_related("group")
+        ).select_related("group")
 
     def get_serializer_class(self):
         serializer_mapping = {
@@ -174,11 +174,11 @@ class FilesViewSet(ModelViewSet):
         zip_file = request.FILES.get("file")
 
         if not zip_file:
-            return Response({"error": "No file provided."}, status=400)
+            return Response({"message": "No file provided."}, status=400)
 
         if not zip_file.name.endswith(".zip"):
             return Response(
-                {"error": "Uploaded file is not a ZIP archive."}, status=400
+                {"message": "Uploaded file is not a ZIP archive."}, status=400
             )
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -221,7 +221,7 @@ class FilesViewSet(ModelViewSet):
                 )
 
             except zipfile.BadZipFile:
-                return Response({"error": "Invalid ZIP file."}, status=400)
+                return Response({"message": "Invalid ZIP file."}, status=400)
 
     @extend_schema(
         methods=["PATCH"],
@@ -242,31 +242,43 @@ class FilesViewSet(ModelViewSet):
                 {"message": "The file is on generate status. Wait until its done!"},
                 status=400,
             )
+
         generate_type = request.data.get("type")
-        user_prompt = request.data.get("user_prompt")
-        target_format = request.data.get("target_format")
-
         if not generate_type:
-            return Response({"error": "Missing 'type' in request data."}, status=400)
+            return Response({"message": "Missing 'type' in request data."}, status=400)
 
-        extracted_data = None
-        if generate_type == "filename":
-            extracted_data = generate_filename(obj, target_format)
-            obj.name = extracted_data
-            obj.save()
-        elif generate_type == "short_description":
-            extracted_data = generate_short_description(obj)
-            obj.short_description = extracted_data
-            obj.save()
-        elif generate_type == "tags":
-            extracted_data = generate_tags(obj)
-            if extracted_data:
-                for generated_tag in extracted_data:
-                    obj.tags.add(generated_tag)
-                obj.save()
-        else:
-            extracted_data = extract_data(obj, user_prompt)
+        user_prompt = request.data.get("user_prompt")
 
+        obj.status = "generate"
+        obj.save(update_fields=["status"])
+
+        try:
+            extracted_data = None
+            if generate_type == "name":
+                target_format = request.data.get("target_format")
+                extracted_data = generate_filename(obj, target_format)
+                obj.name = extracted_data
+            elif generate_type == "short_description":
+                extracted_data = generate_short_description(obj)
+                obj.short_description = extracted_data
+            elif generate_type == "tags":
+                extracted_data = generate_tags(obj)
+                if extracted_data:
+                    for generated_tag in extracted_data:
+                        obj.tags.add(generated_tag)
+            else:
+                extracted_data = extract_data(obj, user_prompt)
+
+        except Exception as exc:
+            logger.error(exc)
+            obj.status = "ready"
+            obj.save(update_fields=["status"])
+            return Response(
+                {"message": "There was a problem in generating data !"}, status=400
+            )
+
+        obj.status = "ready"
+        obj.save(update_fields=["status", "name", "short_description"])
         return Response({"extracted_data": extracted_data}, status=200)
 
 
