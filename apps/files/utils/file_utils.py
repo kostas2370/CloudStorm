@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.Logger("CloudStorm logger")
+
 def get_file_type(ext: str) -> str:
     extension_mapping = {
         "image": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "jfif"],
@@ -30,8 +34,9 @@ def generate_filename(file, target_format: str = "") -> str:
     try:
         filename = file.data_extraction(prompt)
         file.create_extracted_data(name="filename_generation", data=filename)
-    except Exception:
-        return None
+    except Exception as exc:
+        logger.error(exc)
+        filename = file.name
 
     return filename
 
