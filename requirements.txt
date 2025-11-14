@@ -25,5 +25,3 @@ channels-redis
 django-debug-toolbar
 gunicorn
 django-cors-headers
-clamd
-nudenet
