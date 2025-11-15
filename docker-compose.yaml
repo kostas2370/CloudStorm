@@ -31,7 +31,10 @@ services:
     depends_on:
       - db
       - redis
-    restart: unless-stopped
+
+    volumes:
+      - .:/app
+    
 
 
   celery:

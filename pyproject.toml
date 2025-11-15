@@ -36,12 +36,8 @@ dependencies = [
     "redis",
     "channels-redis",
     "django-debug-toolbar",
-    "django-cors-headers"
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest~=8.3.4"
+    "django-cors-headers",
+    "model_bakery"
 ]
 
 [tool.ruff]

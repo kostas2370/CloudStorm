@@ -2,6 +2,7 @@ import logging
 
 logger = logging.Logger("CloudStorm logger")
 
+
 def get_file_type(ext: str) -> str:
     extension_mapping = {
         "image": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "jfif"],

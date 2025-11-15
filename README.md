@@ -23,7 +23,6 @@ A modern, Django-based file management system with AI-powered data extraction, g
 - **Storage**: Azure Blob Storage
 - **Authentication**: JWT (djangorestframework-simplejwt)
 - **API Documentation**: drf-spectacular
-- **Testing**: pytest
 - **Containerization**: Docker & Docker Compose
 
 ## Prerequisites
@@ -131,7 +130,6 @@ CloudStorm/
 ├── CloudStorm/        # Main project settings
 │   ├── settings/      # Environment-specific settings
 │   └── urls.py        # URL configuration
-├── tests/             # Test suite
 ├── fixtures/          # Database fixtures
 ├── scripts/           # Startup scripts
 ├── docker-compose.yaml
@@ -186,10 +184,10 @@ Authorization: Bearer <access_token>
 
 ## Testing
 
-Run tests using pytest:
+Run tests using django test:
 
 ```bash
-pytest
+python manage.py test
 ```
 
 Run tests with coverage:
