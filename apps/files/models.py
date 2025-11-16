@@ -16,6 +16,7 @@ import logging
 
 logger = logging.Logger("CloudStorm logger")
 
+
 class File(models.Model):
     FILE_TYPES = [
         ("image", "Image"),

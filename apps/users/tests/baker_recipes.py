@@ -3,6 +3,12 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
+class FakeRequest:
+    def __init__(self, data=None):
+        self.data = data or {}
+
+
 user_recipe = Recipe(
     User,
     email=seq("user_{0}@example.com"),

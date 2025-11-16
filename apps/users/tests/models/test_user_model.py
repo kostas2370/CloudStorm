@@ -1,10 +1,7 @@
 from django.test import TestCase
-from model_bakery import baker
-from django.contrib.auth import get_user_model
 
 from apps.users.tests.baker_recipes import (
     user_recipe,
-    verified_user_recipe,
     staff_user_recipe,
 )
 
