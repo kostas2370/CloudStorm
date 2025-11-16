@@ -23,7 +23,7 @@ from .serializers import (
     RegisterSerializer,
     UserSerializer,
     VerifySerializer,
-    CookieTokenRefreshSerializer,
+    TokenRefreshSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -144,17 +144,11 @@ class LoginView(generics.GenericAPIView):
         return response
 
 
-class CookieTokenRefreshView(jwt_views.TokenRefreshView):
-    serializer_class = CookieTokenRefreshSerializer
+class TokenRefreshView(jwt_views.TokenRefreshView):
+    serializer_class = TokenRefreshSerializer
 
     def finalize_response(self, request, response, *args, **kwargs):
-        refresh = request.COOKIES.get("refresh_token")
-
-        if not refresh:
-            response.data = {"Message": "You need to set refresh token"}
-            response.status_code = 400
-            return super().finalize_response(request, response, *args, **kwargs)
-
+        refresh = request.data.get("refresh_token")
         try:
             tokens.RefreshToken(refresh)
         except TokenError:

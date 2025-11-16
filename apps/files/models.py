@@ -12,7 +12,9 @@ from .utils.data_extraction import (
 from .utils.file_utils import content_file_name, get_file_type
 import uuid
 from apps.groups.models import UUIDTaggedItem
+import logging
 
+logger = logging.Logger("CloudStorm logger")
 
 class File(models.Model):
     FILE_TYPES = [
@@ -83,6 +85,7 @@ class File(models.Model):
             return attrs
 
         except Exception as e:
+            logger.error(f"Error getting metadata for file {self.file.name}: {e}")
             return {"error": str(e)}
 
     def data_extraction(self, prompt):

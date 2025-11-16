@@ -88,11 +88,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class CookieTokenRefreshSerializer(jwt_serializers.TokenRefreshSerializer):
+class TokenRefreshSerializer(jwt_serializers.TokenRefreshSerializer):
     refresh = None
 
     def validate(self, attrs):
-        attrs["refresh"] = self.context["request"].COOKIES.get("refresh_token")
+        attrs["refresh"] = self.context["request"].data.get("refresh_token")
         if attrs["refresh"]:
             return super().validate(attrs)
         else:
