@@ -56,7 +56,6 @@ class AddMemberSerializer(serializers.Serializer):
         user = get_user_model().objects.filter(email=value).first()
         if not user:
             raise serializers.ValidationError("No user with this email exists.")
-        return value
 
         group = self.context.get("group")
         if group and GroupUser.objects.filter(group=group, user=user).exists():

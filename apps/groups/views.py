@@ -175,7 +175,7 @@ class GroupsViewSet(ModelViewSet):
         description="Removes a member from the group by UUID. Only admins can remove themselves or non-admin users.",
     )
     @action(methods=["DELETE"], detail=True)
-    def remove_member(self, request, _):
+    def remove_member(self, request, pk=None):
         group = self.get_object()
         user_id = request.query_params.get("user_id")
         if not user_id:

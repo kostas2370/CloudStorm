@@ -6,7 +6,6 @@ from apps.users.tasks import send_email
 
 
 class SendEmailTaskTests(TestCase):
-
     @patch("apps.users.tasks.send_mail")
     def test_send_email_task_calls_send_mail_with_correct_args(self, mock_send_mail):
         subject = "Test Subject"
