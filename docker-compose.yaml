@@ -24,7 +24,7 @@ services:
   api:
     build: 
       context: .
-      dockerfile: Dockerfile # The one in your root for Django
+      dockerfile: Dockerfile
     command: /startdjango
     ports:
       - "8000:8000"
