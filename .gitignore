@@ -142,3 +142,50 @@ uv.lock
 
 .idea
 /CloudStorm/staticfiles/
+
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production Build
+dist/
+build/
+
+# Environment Variables (CRITICAL: Never commit these)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+eslintdebug.log*
+
+# Editor/IDE Metadata
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Docker
+.docker/
+# (Keep your docker-compose.yml, but ignore local overrides if you use them)
+docker-compose.override.yml
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo

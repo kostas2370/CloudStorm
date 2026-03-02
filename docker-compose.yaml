@@ -36,7 +36,21 @@ services:
       - .:/app
     
 
-
+  frontend:
+    build:
+      context: ./cloudstorm-frontend 
+      dockerfile: Dockerfile
+    container_name: cloudstorm_ui
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./cloudstorm-frontend:/app   
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
   celery:
     build: .
     command: /startceleryworker

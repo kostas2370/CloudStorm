@@ -6,8 +6,11 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:1234",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS += ["debug_toolbar"]
 #MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE
@@ -20,13 +23,12 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": "DEBUG"},
 }
 
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "AUTH_HEADER_TYPES": "Bearer",
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_COOKIE": "access",
     "AUTH_COOKIE_REFRESH": "refresh",
-    "AUTH_COOKIE_SECURE": True,
+    "AUTH_COOKIE_SECURE": False, 
     "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SAMESITE": "Strict",
-}
+    "AUTH_COOKIE_SAMESITE": "Lax",}
