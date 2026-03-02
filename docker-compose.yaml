@@ -22,7 +22,9 @@ services:
     restart: unless-stopped
 
   api:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile # The one in your root for Django
     command: /startdjango
     ports:
       - "8000:8000"
@@ -31,34 +33,37 @@ services:
     depends_on:
       - db
       - redis
-
     volumes:
       - .:/app
-    
 
   frontend:
     build:
       context: ./cloudstorm-frontend 
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile # The one inside cloudstorm-frontend
     container_name: cloudstorm_ui
     ports:
       - "5173:5173"
     volumes:
       - ./cloudstorm-frontend:/app   
-      - /app/node_modules
+      - /app/node_modules # Anonymous volume to protect container dependencies
     environment:
       - VITE_API_URL=http://localhost:8000
     depends_on:
       - api
     restart: unless-stopped
+
   celery:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     command: /startceleryworker
     env_file:
       - .env
     depends_on:
       - redis
       - db
+    volumes:
+      - .:/app
     restart: unless-stopped
 
 volumes:

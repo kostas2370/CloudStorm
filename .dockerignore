@@ -1,6 +1,3 @@
-.git
-__pycache__/
-*.pyc
-.env
-/media
-/staticfiles
+cloudstorm-frontend/
+node_modules/
+.git/
