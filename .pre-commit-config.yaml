@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: prettier
         # Only run on frontend files
-        files: ^cloudstorm-frontend/
+        files: ^frontend/
         types_arr: [javascript, typescript, jsx, tsx, json, css, scss, html]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
@@ -45,5 +45,5 @@ repos:
         name: TypeScript Check
         entry: bash -c "cd cloudstorm-frontend && npm run type-check"
         language: system
-        files: ^cloudstorm-frontend/
+        files: ^frontend/
         pass_filenames: false

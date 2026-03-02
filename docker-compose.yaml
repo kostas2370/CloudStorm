@@ -35,21 +35,28 @@ services:
       - redis
     volumes:
       - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   frontend:
     build:
-      context: ./cloudstorm-frontend 
-      dockerfile: Dockerfile # The one inside cloudstorm-frontend
+      context: ./frontend          
+      dockerfile: Dockerfile
     container_name: cloudstorm_ui
     ports:
       - "5173:5173"
     volumes:
-      - ./cloudstorm-frontend:/app   
-      - /app/node_modules # Anonymous volume to protect container dependencies
+      - ./frontend:/app            
+      - /app/node_modules           
     environment:
       - VITE_API_URL=http://localhost:8000
     depends_on:
-      - api
+      api:
+        condition: service_healthy 
     restart: unless-stopped
 
   celery:
