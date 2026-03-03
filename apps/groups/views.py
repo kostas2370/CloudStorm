@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
 from django_filters.rest_framework import DjangoFilterBackend
-from django.conf import settings
 from django.http import StreamingHttpResponse
 
 from .models import Group
@@ -22,14 +21,11 @@ from .swagger_seriallizers import (
     AddMemberResponseSerializer,
 )
 
-import io
-import zipfile
 import logging
 from uuid import UUID
 
-
-from azure.storage.blob import BlobServiceClient
 from apps.users.tasks import send_email
+from .services import download_group_zip
 
 logger = logging.Logger("CloudStorm Logger")
 
@@ -242,35 +238,11 @@ class GroupsViewSet(ModelViewSet):
     @action(methods=["GET"], detail=True)
     def download_zip(self, request, pk):
         group = self.get_object()
-        files = group.files.all()
 
-        if not files.exists():
+        if not group.files.exists():
             return Response("No files found.", status=404)
 
-        blob_service_client = BlobServiceClient.from_connection_string(
-            settings.AZURE_CONNECTION_STRING
-        )
-        container = settings.AZURE_CONTAINER
-
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for file in files:
-                blob_path = file.file.name
-
-                try:
-                    blob_client = blob_service_client.get_blob_client(
-                        container=container, blob=blob_path
-                    )
-                    stream = blob_client.download_blob()
-                    file_data = stream.readall()
-                    filename = file.name or blob_path.split("/")[-1]
-                    zip_file.writestr(filename, file_data)
-
-                except Exception as e:
-                    logger.error(f"Error downloading blob {blob_path}: {e}")
-                    continue
-
-        zip_buffer.seek(0)
+        zip_buffer = download_group_zip(group)
 
         response = StreamingHttpResponse(zip_buffer, content_type="application/zip")
         response["Content-Disposition"] = (

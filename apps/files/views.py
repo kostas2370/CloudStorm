@@ -7,7 +7,6 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParamet
 
 from django.conf import settings
 from django.http import StreamingHttpResponse
-from django.core.files.base import ContentFile
 
 
 from .models import File
@@ -16,6 +15,8 @@ from .serializers import (
     FileSerializer,
     FileListSerializer,
     FilePartialUpdateSerializer,
+    ZipUploadSerializer,
+    AIGenerateSerializer,
 )
 from .permissions import (
     CanAdd,
@@ -25,12 +26,7 @@ from .permissions import (
     CanRetrieve,
     FileAccessPermission,
 )
-from .utils.file_utils import (
-    generate_filename,
-    generate_short_description,
-    generate_tags,
-    extract_data,
-)
+from .services import ai_generate_service, zip_upload_service
 
 from apps.groups.permissions import CanAccessPrivateGroup
 from apps.groups.models import GroupUser
@@ -50,8 +46,6 @@ from .swagger_serializers import (
 from .filters import FileFilter
 
 import zipfile
-import os
-import tempfile
 import logging
 
 logger = logging.Logger("CloudStorm Logger")
@@ -77,6 +71,8 @@ class FilesViewSet(ModelViewSet):
             "create": MultiFileUploadSerializer,
             "list": FileListSerializer,
             "partial_update": FilePartialUpdateSerializer,
+            "zip_upload": ZipUploadSerializer,
+            "ai_generate": AIGenerateSerializer,
         }
 
         return serializer_mapping.get(self.action, FileSerializer)
@@ -171,57 +167,20 @@ class FilesViewSet(ModelViewSet):
     )
     @action(methods=["POST"], detail=False)
     def zip_upload(self, request):
-        zip_file = request.FILES.get("file")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if not zip_file:
-            return Response({"message": "No file provided."}, status=400)
+        try:
+            file_instances = zip_upload_service(serializer.validated_data, request)
+        except zipfile.BadZipFile:
+            return Response({"message": "Invalid ZIP file."}, status=400)
 
-        if not zip_file.name.endswith(".zip"):
-            return Response(
-                {"message": "Uploaded file is not a ZIP archive."}, status=400
-            )
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            try:
-                with zipfile.ZipFile(zip_file, "r") as zip_ref:
-                    zip_ref.extractall(temp_dir)
-
-                files = []
-                for root, dirs, file_names in os.walk(temp_dir):
-                    for filename in file_names:
-                        file_path = os.path.join(root, filename)
-
-                        with open(file_path, "rb") as f:
-                            content = f.read()
-
-                        content_file = ContentFile(content, name=filename)
-                        files.append(content_file)
-
-                serializer_data = {
-                    "files": files,
-                    "tags": request.data.get("tags", ""),
-                    "ai_enabled": request.data.get("ai_enabled", False),
-                }
-
-                serializer = MultiFileUploadSerializer(
-                    data=serializer_data,
-                    context={
-                        "request": request,
-                        "group": request.query_params.get("group"),
-                    },
-                )
-                serializer.is_valid(raise_exception=True)
-                file_instances = serializer.save()
-
-                return Response(
-                    {
-                        "message": "ZIP extracted and files uploaded successfully.",
-                        "files": [file.id for file in file_instances],
-                    }
-                )
-
-            except zipfile.BadZipFile:
-                return Response({"message": "Invalid ZIP file."}, status=400)
+        return Response(
+            {
+                "message": "ZIP extracted and files uploaded successfully.",
+                "files": [file.id for file in file_instances],
+            }
+        )
 
     @extend_schema(
         methods=["PATCH"],
@@ -237,48 +196,19 @@ class FilesViewSet(ModelViewSet):
     @action(methods=["PATCH"], detail=True)
     def ai_generate(self, request, pk=None):
         obj = self.get_object()
-        if obj.status == "generate":
-            return Response(
-                {"message": "The file is on generate status. Wait until its done!"},
-                status=400,
-            )
-
-        generate_type = request.data.get("type")
-        if not generate_type:
-            return Response({"message": "Missing 'type' in request data."}, status=400)
-
-        user_prompt = request.data.get("user_prompt")
-
-        obj.status = "generate"
-        obj.save(update_fields=["status"])
+        serializer = self.get_serializer(
+            data=request.data,
+            context={**self.get_serializer_context(), "file_obj": obj},
+        )
+        serializer.is_valid(raise_exception=True)
 
         try:
-            extracted_data = None
-            if generate_type == "name":
-                target_format = request.data.get("target_format")
-                extracted_data = generate_filename(obj, target_format)
-                obj.name = extracted_data
-            elif generate_type == "short_description":
-                extracted_data = generate_short_description(obj)
-                obj.short_description = extracted_data
-            elif generate_type == "tags":
-                extracted_data = generate_tags(obj)
-                if extracted_data:
-                    for generated_tag in extracted_data:
-                        obj.tags.add(generated_tag)
-            else:
-                extracted_data = extract_data(obj, user_prompt)
-
-        except Exception as exc:
-            logger.error(exc)
-            obj.status = "ready"
-            obj.save(update_fields=["status"])
+            extracted_data = ai_generate_service(obj, serializer.validated_data)
+        except Exception:
             return Response(
-                {"message": "There was a problem in generating data !"}, status=400
+                {"message": "There was a problem in generating data!"}, status=400
             )
 
-        obj.status = "ready"
-        obj.save(update_fields=["status", "name", "short_description"])
         return Response({"extracted_data": extracted_data}, status=200)
 
 

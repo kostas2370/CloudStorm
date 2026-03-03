@@ -90,3 +90,30 @@ class FilePartialUpdateSerializer(TaggitSerializer, serializers.ModelSerializer)
         model = File
         fields = ["id", "name", "tags", "short_description"]
         read_only_fields = ["id"]
+
+
+class ZipUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    tags = serializers.CharField(max_length=2000, required=False, default="")
+    ai_enabled = serializers.BooleanField(default=False)
+
+    def validate_file(self, value):
+        if not value.name.endswith(".zip"):
+            raise serializers.ValidationError("Uploaded file is not a ZIP archive.")
+        return value
+
+
+class AIGenerateSerializer(serializers.Serializer):
+    GENERATE_TYPES = ["name", "short_description", "tags", "custom"]
+
+    type = serializers.ChoiceField(choices=GENERATE_TYPES)
+    user_prompt = serializers.CharField(required=False, allow_blank=True)
+    target_format = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        file_obj = self.context.get("file_obj")
+        if file_obj and file_obj.status == "generate":
+            raise serializers.ValidationError(
+                "The file is on generate status. Wait until its done!"
+            )
+        return attrs
