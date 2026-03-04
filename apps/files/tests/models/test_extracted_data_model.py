@@ -1,9 +1,11 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from apps.files.tests.baker_recipes import extracted_data_recipe
 from apps.files.models import ExtractedData
+from apps.files.tests.conftest import IN_MEMORY_STORAGES
 
 
+@override_settings(STORAGES=IN_MEMORY_STORAGES)
 class ExtractedDataModelTests(TestCase):
     def test_str_includes_file_name_and_extraction_name(self):
         extracted = extracted_data_recipe.make(
