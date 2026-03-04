@@ -38,7 +38,9 @@ class FilesViewSetListTests(TestCase):
         other_user = user_recipe.make()
         group_user_member_recipe.make(group=group2, user=other_user)
 
-        file_in_group1 = file_recipe.make(group=group1, uploaded_by=self.user, name="Mine")
+        file_in_group1 = file_recipe.make(
+            group=group1, uploaded_by=self.user, name="Mine"
+        )
         file_recipe.make(group=group2, uploaded_by=other_user, name="NotMine")
 
         view = FilesViewSet.as_view({"get": "list"})
@@ -61,7 +63,9 @@ class FilesViewSetListTests(TestCase):
         group_user_member_recipe.make(group=group2, user=other_user)
 
         file_recipe.make(group=group1, uploaded_by=self.user, name="Mine")
-        other_file = file_recipe.make(group=group2, uploaded_by=other_user, name="NotMine")
+        other_file = file_recipe.make(
+            group=group2, uploaded_by=other_user, name="NotMine"
+        )
 
         view = FilesViewSet.as_view({"get": "list"})
         request = self.factory.get("/files/")
@@ -85,8 +89,12 @@ class FilesViewSetListTests(TestCase):
         group = group_recipe.make()
         group_user_member_recipe.make(group=group, user=self.user)
 
-        tagged_file = file_recipe.make(group=group, uploaded_by=self.user, name="Tagged")
-        untagged_file = file_recipe.make(group=group, uploaded_by=self.user, name="Untagged")
+        tagged_file = file_recipe.make(
+            group=group, uploaded_by=self.user, name="Tagged"
+        )
+        untagged_file = file_recipe.make(
+            group=group, uploaded_by=self.user, name="Untagged"
+        )
         tagged_file.tags.add("alpha")
 
         view = FilesViewSet.as_view({"get": "list"})
@@ -248,7 +256,9 @@ class FilesViewSetPartialUpdateTests(TestCase):
         self.user = user_recipe.make(is_verified=True)
         self.group = group_recipe.make()
         self.group_user = group_user_admin_recipe.make(group=self.group, user=self.user)
-        self.file = file_recipe.make(group=self.group, uploaded_by=self.user, name="Original")
+        self.file = file_recipe.make(
+            group=self.group, uploaded_by=self.user, name="Original"
+        )
 
     def test_partial_update_name_with_can_edit_returns_200(self):
         view = FilesViewSet.as_view({"patch": "partial_update"})
@@ -337,7 +347,9 @@ class FilesViewSetDestroyTests(TestCase):
 
     @patch("apps.files.models.File.delete")
     def test_destroy_returns_403_when_status_is_generate(self, mock_delete):
-        file_obj = file_recipe.make(group=self.group, uploaded_by=self.user, status="generate")
+        file_obj = file_recipe.make(
+            group=self.group, uploaded_by=self.user, status="generate"
+        )
 
         view = FilesViewSet.as_view({"delete": "destroy"})
         request = self.factory.delete(f"/files/{file_obj.id}/")
@@ -428,7 +440,9 @@ class FilesViewSetZipUploadTests(TestCase):
         with zipfile.ZipFile(zip_buffer, "w") as zf:
             zf.writestr("hello.txt", "hello world")
         zip_buffer.seek(0)
-        zip_file = SimpleUploadedFile("archive.zip", zip_buffer.read(), content_type="application/zip")
+        zip_file = SimpleUploadedFile(
+            "archive.zip", zip_buffer.read(), content_type="application/zip"
+        )
 
         view = FilesViewSet.as_view({"post": "zip_upload"})
         request = self.factory.post(
@@ -445,7 +459,9 @@ class FilesViewSetZipUploadTests(TestCase):
         mock_zip_service.assert_called_once()
 
     def test_zip_upload_non_zip_file_returns_400(self):
-        txt_file = SimpleUploadedFile("not_a_zip.txt", b"plain text", content_type="text/plain")
+        txt_file = SimpleUploadedFile(
+            "not_a_zip.txt", b"plain text", content_type="text/plain"
+        )
 
         view = FilesViewSet.as_view({"post": "zip_upload"})
         request = self.factory.post(
@@ -463,7 +479,9 @@ class FilesViewSetZipUploadTests(TestCase):
     def test_zip_upload_returns_400_on_bad_zip_file(self, mock_zip_service):
         mock_zip_service.side_effect = zipfile.BadZipFile("not a valid zip")
 
-        zip_file = SimpleUploadedFile("broken.zip", b"not-a-zip-content", content_type="application/zip")
+        zip_file = SimpleUploadedFile(
+            "broken.zip", b"not-a-zip-content", content_type="application/zip"
+        )
 
         view = FilesViewSet.as_view({"post": "zip_upload"})
         request = self.factory.post(
@@ -486,7 +504,9 @@ class FilesViewSetZipUploadTests(TestCase):
         with zipfile.ZipFile(zip_buffer, "w") as zf:
             zf.writestr("hello.txt", "hello world")
         zip_buffer.seek(0)
-        zip_file = SimpleUploadedFile("archive.zip", zip_buffer.read(), content_type="application/zip")
+        zip_file = SimpleUploadedFile(
+            "archive.zip", zip_buffer.read(), content_type="application/zip"
+        )
 
         view = FilesViewSet.as_view({"post": "zip_upload"})
         request = self.factory.post(
@@ -508,7 +528,9 @@ class FilesViewSetAIGenerateTests(TestCase):
         self.user = user_recipe.make(is_verified=True)
         self.group = group_recipe.make()
         group_user_admin_recipe.make(group=self.group, user=self.user)
-        self.file = file_recipe.make(group=self.group, uploaded_by=self.user, status="ready")
+        self.file = file_recipe.make(
+            group=self.group, uploaded_by=self.user, status="ready"
+        )
 
     @patch("apps.files.views.ai_generate_service")
     def test_ai_generate_name_returns_200(self, mock_service):

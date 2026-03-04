@@ -75,7 +75,9 @@ class FileSerializerTests(TestCase):
 
     def test_get_extracted_data_excludes_hidden_items(self):
         file_obj = file_recipe.make(group=self.group, uploaded_by=self.user)
-        extracted_data_recipe.make(file=file_obj, name="visible", hidden_from_user=False)
+        extracted_data_recipe.make(
+            file=file_obj, name="visible", hidden_from_user=False
+        )
         extracted_data_recipe.make(file=file_obj, name="hidden", hidden_from_user=True)
 
         request = self.factory.get("/")

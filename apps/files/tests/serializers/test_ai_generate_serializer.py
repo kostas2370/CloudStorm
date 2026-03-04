@@ -58,9 +58,7 @@ class AIGenerateSerializerValidationTests(TestCase):
             {"type": "name", "target_format": "{date}_{title}"}
         )
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        self.assertEqual(
-            serializer.validated_data["target_format"], "{date}_{title}"
-        )
+        self.assertEqual(serializer.validated_data["target_format"], "{date}_{title}")
 
     def test_blank_user_prompt_is_allowed(self):
         serializer = self._serialize({"type": "custom", "user_prompt": ""})

@@ -14,7 +14,9 @@ from apps.files.tests.baker_recipes import file_recipe
 from apps.files.tests.conftest import IN_MEMORY_STORAGES
 
 
-@override_settings(STORAGES=IN_MEMORY_STORAGES, AZURE_CONNECTION_STRING="fake", AZURE_CONTAINER="fake")
+@override_settings(
+    STORAGES=IN_MEMORY_STORAGES, AZURE_CONNECTION_STRING="fake", AZURE_CONTAINER="fake"
+)
 class SecureAzureBlobViewTests(TestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
@@ -61,7 +63,9 @@ class SecureAzureBlobViewTests(TestCase):
         self, mock_file_get, mock_blob_service_client
     ):
         mock_file_get.return_value = self.file_obj
-        mock_blob_service_client.from_connection_string.side_effect = Exception("Azure unavailable")
+        mock_blob_service_client.from_connection_string.side_effect = Exception(
+            "Azure unavailable"
+        )
 
         view = SecureAzureBlobView.as_view()
         request = self.factory.get(f"/files/media/{self.group.name}/{self.filename}/")
@@ -78,7 +82,9 @@ class SecureAzureBlobViewTests(TestCase):
         self.assertIn("message", response.data)
 
     @patch("apps.files.permissions.File.objects.get")
-    def test_get_returns_403_when_user_has_no_access_to_private_file(self, mock_file_get):
+    def test_get_returns_403_when_user_has_no_access_to_private_file(
+        self, mock_file_get
+    ):
         private_group = group_recipe.make(is_private=True)
         other_user = user_recipe.make()
         group_user_member_recipe.make(group=private_group, user=other_user)
@@ -112,7 +118,9 @@ class SecureAzureBlobViewTests(TestCase):
 
         mock_stream = MagicMock()
         mock_stream.chunks.return_value = iter([b"content"])
-        mock_stream.properties.content_settings.content_type = "application/octet-stream"
+        mock_stream.properties.content_settings.content_type = (
+            "application/octet-stream"
+        )
         mock_blob_client.download_blob.return_value = mock_stream
 
         view = SecureAzureBlobView.as_view()
