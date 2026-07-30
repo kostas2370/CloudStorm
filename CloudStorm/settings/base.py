@@ -142,6 +142,14 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = "users.User"
 
+# Upload limits enforced by apps.files.middleware.VirusScanMiddleware.
+MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE", 100 * 1024 * 1024))
+MAX_ARCHIVE_ENTRIES = int(os.getenv("MAX_ARCHIVE_ENTRIES", 1000))
+MAX_ARCHIVE_UNCOMPRESSED_SIZE = int(
+    os.getenv("MAX_ARCHIVE_UNCOMPRESSED_SIZE", 500 * 1024 * 1024)
+)
+MAX_ARCHIVE_COMPRESSION_RATIO = int(os.getenv("MAX_ARCHIVE_COMPRESSION_RATIO", 100))
+
 
 AZURE_CONTAINER = os.getenv("AZURE_CONTAINER")
 AZURE_ACCOUNT_NAME = os.getenv("AZURE_ACCOUNT_NAME")

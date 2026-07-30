@@ -23,7 +23,9 @@ class AIGenerateSerializerValidationTests(TestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_type_custom_is_valid(self):
-        serializer = self._serialize({"type": "custom"})
+        serializer = self._serialize(
+            {"type": "custom", "user_prompt": "Extract invoice number"}
+        )
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_invalid_type_fails_validation(self):
@@ -36,9 +38,14 @@ class AIGenerateSerializerValidationTests(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertIn("type", serializer.errors)
 
-    def test_user_prompt_is_optional(self):
-        serializer = self._serialize({"type": "custom"})
+    def test_user_prompt_is_optional_for_generated_fields(self):
+        serializer = self._serialize({"type": "name"})
         self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_user_prompt_is_required_for_custom_type(self):
+        serializer = self._serialize({"type": "custom"})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("user_prompt", serializer.errors)
 
     def test_user_prompt_accepted_when_provided(self):
         serializer = self._serialize(
@@ -60,8 +67,13 @@ class AIGenerateSerializerValidationTests(TestCase):
         self.assertTrue(serializer.is_valid(), serializer.errors)
         self.assertEqual(serializer.validated_data["target_format"], "{date}_{title}")
 
-    def test_blank_user_prompt_is_allowed(self):
+    def test_blank_user_prompt_is_rejected_for_custom_type(self):
         serializer = self._serialize({"type": "custom", "user_prompt": ""})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("user_prompt", serializer.errors)
+
+    def test_blank_user_prompt_is_allowed_for_generated_fields(self):
+        serializer = self._serialize({"type": "tags", "user_prompt": ""})
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_blank_target_format_is_allowed(self):

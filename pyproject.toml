@@ -37,7 +37,8 @@ dependencies = [
     "channels-redis",
     "django-debug-toolbar",
     "django-cors-headers",
-    "model_bakery"
+    "model_bakery",
+    "filetype"
 ]
 
 [tool.ruff]

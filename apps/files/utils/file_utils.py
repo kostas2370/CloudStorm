@@ -1,17 +1,30 @@
 import logging
 
-logger = logging.Logger("CloudStorm logger")
+logger = logging.getLogger(__name__)
+
+EXTENSION_MAPPING = {
+    "image": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "jfif"],
+    "video": ["mp4", "avi", "mov", "mkv", "flv", "wmv", "webm"],
+    "document": ["pdf", "doc", "docx", "txt", "xls", "xlsx", "ppt", "pptx", "csv"],
+    "audio": ["mp3", "wav", "aac", "flac", "ogg", "m4a"],
+}
+
+# Archives are uploadable but are unpacked instead of stored, so they stay out of
+# EXTENSION_MAPPING and never become a File.file_type of their own.
+ARCHIVE_EXTENSIONS = frozenset({".zip"})
+
+ALLOWED_EXTENSIONS = (
+    frozenset(
+        f".{extension}"
+        for extensions in EXTENSION_MAPPING.values()
+        for extension in extensions
+    )
+    | ARCHIVE_EXTENSIONS
+)
 
 
 def get_file_type(ext: str) -> str:
-    extension_mapping = {
-        "image": ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "svg", "webp", "jfif"],
-        "video": ["mp4", "avi", "mov", "mkv", "flv", "wmv", "webm"],
-        "document": ["pdf", "doc", "docx", "txt", "xls", "xlsx", "ppt", "pptx", "csv"],
-        "audio": ["mp3", "wav", "aac", "flac", "ogg", "m4a"],
-    }
-
-    for file_type, extensions in extension_mapping.items():
+    for file_type, extensions in EXTENSION_MAPPING.items():
         if ext in extensions:
             return file_type
 
@@ -34,9 +47,12 @@ def generate_filename(file, target_format: str = "") -> str:
     """
     try:
         filename = file.data_extraction(prompt)
+        if not filename:
+            return file.name
+
         file.create_extracted_data(name="filename_generation", data=filename)
-    except Exception as exc:
-        logger.error(exc)
+    except Exception:
+        logger.exception("Filename generation failed for file %s", file.pk)
         filename = file.name
 
     return filename
@@ -47,6 +63,9 @@ def generate_short_description(file):
      Based on the content of the file below, generate a short description, Maximum 1000 characters.
     """
     short_description = file.data_extraction(prompt)
+    if not short_description:
+        return None
+
     file.create_extracted_data(
         name="short_description_generation", data=short_description
     )
@@ -55,12 +74,15 @@ def generate_short_description(file):
 
 def generate_tags(file):
     prompt = """
-    Based on the content of the file below, generate tags in the format: x1,x2,x3, etc. 
+    Based on the content of the file below, generate tags in the format: x1,x2,x3, etc.
     Return only the tags, nothing else. Be as generic as possible. If you can not generate tags return tag other
     """
     tags = file.data_extraction(prompt)
+    if not tags:
+        return []
+
     file.create_extracted_data(name="tags_generation", data=tags)
-    return tags.split(",")
+    return [tag.strip() for tag in tags.split(",") if tag.strip()]
 
 
 def extract_data(file, user_prompt):

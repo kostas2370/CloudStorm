@@ -26,6 +26,7 @@ from .permissions import (
     CanRetrieve,
     FileAccessPermission,
 )
+from .exceptions import AIGenerationError
 from .services import ai_generate_service, zip_upload_service
 
 from apps.groups.permissions import CanAccessPrivateGroup
@@ -48,7 +49,7 @@ from .filters import FileFilter
 import zipfile
 import logging
 
-logger = logging.Logger("CloudStorm Logger")
+logger = logging.getLogger(__name__)
 
 
 class FilesViewSet(ModelViewSet):
@@ -187,10 +188,13 @@ class FilesViewSet(ModelViewSet):
         request=AIGenerateRequestSerializer,
         responses={
             200: AIGenerateResponseSerializer,
-            400: OpenApiResponse(description="Missing or invalid input data"),
+            400: OpenApiResponse(
+                description="Invalid input, unsupported file type, or generation already running"
+            ),
             403: OpenApiResponse(
                 description="User is not authenticated or lacks edit permissions"
             ),
+            500: OpenApiResponse(description="Generation failed unexpectedly"),
         },
     )
     @action(methods=["PATCH"], detail=True)
@@ -204,10 +208,8 @@ class FilesViewSet(ModelViewSet):
 
         try:
             extracted_data = ai_generate_service(obj, serializer.validated_data)
-        except Exception:
-            return Response(
-                {"message": "There was a problem in generating data!"}, status=400
-            )
+        except AIGenerationError as exc:
+            return Response({"message": str(exc)}, status=400)
 
         return Response({"extracted_data": extracted_data}, status=200)
 

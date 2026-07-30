@@ -14,19 +14,30 @@ import uuid
 from apps.groups.models import UUIDTaggedItem
 import logging
 
-logger = logging.Logger("CloudStorm logger")
+logger = logging.getLogger(__name__)
+
+
+def extraction_functions():
+    # Resolved on each call so the extractors stay patchable in tests.
+    return {
+        "image": image_data_extraction,
+        "document": document_data_extraction,
+        "audio": audio_data_extraction,
+        "video": video_data_extraction,
+    }
 
 
 class File(models.Model):
-    FILE_TYPES = [
-        ("image", "Image"),
-        ("video", "Video"),
-        ("document", "Document"),
-        ("audio", "Audio"),
-        ("other", "Other"),
-    ]
+    class FileType(models.TextChoices):
+        IMAGE = "image", "Image"
+        VIDEO = "video", "Video"
+        DOCUMENT = "document", "Document"
+        AUDIO = "audio", "Audio"
+        OTHER = "other", "Other"
 
-    FILE_STATUS = [("ready", "Ready"), ("generate", "Generate")]
+    class FileStatus(models.TextChoices):
+        READY = "ready", "Ready"
+        GENERATE = "generate", "Generate"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=500, blank=True, null=True)
@@ -40,12 +51,14 @@ class File(models.Model):
     tags = TaggableManager(through=UUIDTaggedItem)
     file = models.FileField(upload_to=content_file_name)
     file_type = models.CharField(
-        max_length=10, choices=FILE_TYPES, blank=True, null=True
+        max_length=10, choices=FileType.choices, blank=True, null=True
     )
     file_size = models.PositiveIntegerField(default=1)
     file_extension = models.CharField(max_length=10, blank=True, null=True)
     short_description = models.CharField(max_length=2000, blank=True, null=True)
-    status = models.CharField(max_length=20, default="ready", choices=FILE_STATUS)
+    status = models.CharField(
+        max_length=20, default=FileStatus.READY, choices=FileStatus.choices
+    )
 
     def __str__(self):
         return self.name if self.name else f"File {self.id}"
@@ -53,10 +66,14 @@ class File(models.Model):
     def save(self, *args, **kwargs):
         if not self.name and self.file:
             self.name = self.file.name
-        if self.file:
+
+        # self.file.size asks the storage backend, so only recompute the file
+        # metadata on a full save, where the file itself may have changed.
+        if self.file and kwargs.get("update_fields") is None:
             self.file_size = self.file.size
             self.file_extension = os.path.splitext(self.file.name)[1][1:].lower()
             self.file_type = get_file_type(self.file_extension)
+
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -89,15 +106,11 @@ class File(models.Model):
             logger.error(f"Error getting metadata for file {self.file.name}: {e}")
             return {"error": str(e)}
 
-    def data_extraction(self, prompt):
-        extraction_function_mapper = {
-            "image": image_data_extraction,
-            "document": document_data_extraction,
-            "audio": audio_data_extraction,
-            "video": video_data_extraction,
-        }
+    def supports_data_extraction(self):
+        return self.file_type in extraction_functions()
 
-        extraction_function = extraction_function_mapper.get(self.file_type, None)
+    def data_extraction(self, prompt):
+        extraction_function = extraction_functions().get(self.file_type, None)
         if extraction_function:
             return extraction_function(self, prompt)
 

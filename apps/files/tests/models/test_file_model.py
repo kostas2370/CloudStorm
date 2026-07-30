@@ -1,7 +1,8 @@
 from django.test import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from apps.files.models import File, ExtractedData
+from apps.files.tests.baker_recipes import file_recipe
 from apps.groups.tests.baker_recipes import group_recipe, group_user_member_recipe
 from apps.users.tests.baker_recipes import user_recipe
 
@@ -144,3 +145,32 @@ class FileGetMetaDataTests(TestCase):
         mock_logger.error.assert_called_once()
         self.assertIn("error", data)
         self.assertEqual(data["error"], "boom")
+
+
+class FileSaveStorageAccessTests(TestCase):
+    def setUp(self):
+        self.file_obj = file_recipe.make()
+
+    def size_patch(self):
+        # FieldFile.size asks the storage backend, which is a remote call on Azure.
+        return patch(
+            "django.db.models.fields.files.FieldFile.size",
+            new_callable=PropertyMock,
+            return_value=12,
+        )
+
+    def test_partial_save_does_not_ask_storage_for_the_file_size(self):
+        with self.size_patch() as mock_size:
+            self.file_obj.status = File.FileStatus.GENERATE
+            self.file_obj.save(update_fields=["status"])
+
+        mock_size.assert_not_called()
+
+    def test_full_save_still_refreshes_the_file_metadata(self):
+        with self.size_patch() as mock_size:
+            self.file_obj.save()
+
+        mock_size.assert_called_once()
+        self.assertEqual(self.file_obj.file_size, 12)
+        self.assertEqual(self.file_obj.file_extension, "txt")
+        self.assertEqual(self.file_obj.file_type, File.FileType.DOCUMENT)

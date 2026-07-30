@@ -112,8 +112,14 @@ class AIGenerateSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         file_obj = self.context.get("file_obj")
-        if file_obj and file_obj.status == "generate":
+        if file_obj and file_obj.status == File.FileStatus.GENERATE:
             raise serializers.ValidationError(
                 "The file is on generate status. Wait until its done!"
             )
+
+        if attrs["type"] == "custom" and not attrs.get("user_prompt"):
+            raise serializers.ValidationError(
+                {"user_prompt": "This field is required for custom generation."}
+            )
+
         return attrs

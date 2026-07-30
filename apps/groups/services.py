@@ -5,7 +5,7 @@ import logging
 from django.conf import settings
 from azure.storage.blob import BlobServiceClient
 
-logger = logging.Logger("CloudStorm Logger")
+logger = logging.getLogger(__name__)
 
 
 def download_group_zip(group):

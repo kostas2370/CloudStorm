@@ -27,7 +27,7 @@ from uuid import UUID
 from apps.users.tasks import send_email
 from .services import download_group_zip
 
-logger = logging.Logger("CloudStorm Logger")
+logger = logging.getLogger(__name__)
 
 
 class GroupsViewSet(ModelViewSet):

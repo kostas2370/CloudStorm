@@ -12,6 +12,7 @@ from unittest.mock import patch, MagicMock
 
 from apps.files.views import FilesViewSet
 from apps.files.models import File
+from apps.files.exceptions import UnsupportedFileType
 
 from apps.users.tests.baker_recipes import user_recipe
 from apps.groups.tests.baker_recipes import (
@@ -551,8 +552,10 @@ class FilesViewSetAIGenerateTests(TestCase):
         mock_service.assert_called_once()
 
     @patch("apps.files.views.ai_generate_service")
-    def test_ai_generate_returns_400_on_service_exception(self, mock_service):
-        mock_service.side_effect = Exception("OpenAI error")
+    def test_ai_generate_returns_400_on_generation_error(self, mock_service):
+        mock_service.side_effect = UnsupportedFileType(
+            "AI generation is not supported for other files."
+        )
 
         view = FilesViewSet.as_view({"patch": "ai_generate"})
         data = {"type": "short_description"}
@@ -564,7 +567,23 @@ class FilesViewSetAIGenerateTests(TestCase):
         response = view(request, pk=str(self.file.id))
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("message", response.data)
+        self.assertEqual(
+            response.data["message"], "AI generation is not supported for other files."
+        )
+
+    @patch("apps.files.views.ai_generate_service")
+    def test_ai_generate_does_not_mask_unexpected_errors_as_400(self, mock_service):
+        mock_service.side_effect = RuntimeError("OpenAI error")
+
+        view = FilesViewSet.as_view({"patch": "ai_generate"})
+        data = {"type": "short_description"}
+        request = self.factory.patch(
+            f"/files/{self.file.id}/ai_generate/", data, format="json"
+        )
+        force_authenticate(request, user=self.user)
+
+        with self.assertRaises(RuntimeError):
+            view(request, pk=str(self.file.id))
 
     def test_ai_generate_returns_403_when_file_status_is_generate(self):
         # CanEdit.has_object_permission returns False when status=="generate",

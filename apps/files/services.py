@@ -5,6 +5,12 @@ import zipfile
 
 from django.core.files.base import ContentFile
 
+from .exceptions import (
+    FileAlreadyGenerating,
+    GenerationFailed,
+    UnsupportedFileType,
+)
+from .models import File
 from .utils.file_utils import (
     generate_filename,
     generate_short_description,
@@ -17,7 +23,7 @@ _FIELD_GENERATORS = {
     "short_description": lambda obj, data: generate_short_description(obj),
 }
 
-logger = logging.Logger("CloudStorm Logger")
+logger = logging.getLogger(__name__)
 
 
 def zip_upload_service(validated_data, request):
@@ -50,30 +56,49 @@ def ai_generate_service(obj, validated_data):
     generate_type = validated_data["type"]
     user_prompt = validated_data.get("user_prompt")
 
-    obj.status = "generate"
-    obj.save(update_fields=["status"])
+    if not obj.supports_data_extraction():
+        raise UnsupportedFileType(
+            f"AI generation is not supported for {obj.file_type or 'unknown'} files."
+        )
+
+    # Claim the file in a single statement so two parallel requests cannot both start.
+    claimed = File.objects.filter(pk=obj.pk, status=File.FileStatus.READY).update(
+        status=File.FileStatus.GENERATE
+    )
+    if not claimed:
+        raise FileAlreadyGenerating(
+            "The file is on generate status. Wait until its done!"
+        )
+
+    obj.status = File.FileStatus.GENERATE
+    updated_fields = ["status"]
 
     try:
-        extracted_data = None
-
         if generate_type in _FIELD_GENERATORS:
             extracted_data = _FIELD_GENERATORS[generate_type](obj, validated_data)
+            if not extracted_data:
+                raise GenerationFailed(
+                    f"Could not generate {generate_type} for this file."
+                )
+
             setattr(obj, generate_type, extracted_data)
+            updated_fields.append(generate_type)
         elif generate_type == "tags":
             extracted_data = generate_tags(obj)
-            if extracted_data:
-                for tag in extracted_data:
-                    obj.tags.add(tag)
+            for tag in extracted_data:
+                obj.tags.add(tag)
         else:
             extracted_data = extract_data(obj, user_prompt)
 
-    except Exception as exc:
-        logger.error(exc)
-        obj.status = "ready"
+    except Exception:
+        logger.exception(
+            "AI generation of %s failed for file %s", generate_type, obj.pk
+        )
+        obj.status = File.FileStatus.READY
         obj.save(update_fields=["status"])
         raise
 
-    obj.status = "ready"
-    obj.save(update_fields=["status", "name", "short_description"])
+    obj.status = File.FileStatus.READY
+    obj.save(update_fields=updated_fields)
 
     return extracted_data
